@@ -6,10 +6,33 @@ import { WIDGET_ICON_META } from './widgetIconMeta';
 
 export function useLongPress(onLongPress, delay = 500) {
   const timer = useRef(null);
+  const pos = useRef(null);
   return {
-    onMouseDown: (e) => { e.stopPropagation(); timer.current = setTimeout(onLongPress, delay); },
-    onMouseUp:    () => clearTimeout(timer.current),
+    onMouseDown: (e) => {
+      pos.current = { x: e.clientX, y: e.clientY };
+      timer.current = setTimeout(onLongPress, delay);
+    },
+    onMouseMove: (e) => {
+      if (pos.current) {
+        const dx = Math.abs(e.clientX - pos.current.x);
+        const dy = Math.abs(e.clientY - pos.current.y);
+        if (dx > 5 || dy > 5) clearTimeout(timer.current);
+      }
+    },
+    onMouseUp: () => clearTimeout(timer.current),
     onMouseLeave: () => clearTimeout(timer.current),
+    onTouchStart: (e) => {
+      pos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      timer.current = setTimeout(onLongPress, delay);
+    },
+    onTouchMove: (e) => {
+      if (pos.current) {
+        const dx = Math.abs(e.touches[0].clientX - pos.current.x);
+        const dy = Math.abs(e.touches[0].clientY - pos.current.y);
+        if (dx > 5 || dy > 5) clearTimeout(timer.current);
+      }
+    },
+    onTouchEnd: () => clearTimeout(timer.current),
   };
 }
 

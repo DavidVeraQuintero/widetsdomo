@@ -2,7 +2,7 @@ import { useDashboard } from '../../store/dashboardStore.jsx';
 import { getCatalogEntry } from '../../catalog/widgetCatalog.jsx';
 import styles from './PropertiesPanel.module.css';
 
-const ALL_SIZES = ['1x1', '1x2', '2x1', '2x2', '2x4', '4x2', '4x4'];
+const ALL_SIZES = ['1x1', '1x2', '2x1', '2x2', '2x4', '4x2', '4x4', '2x6', '2x8', '4x6'];
 
 function findWidgetInState(state) {
   if (!state.selectedId) return { widget: null, parentGroupId: null };

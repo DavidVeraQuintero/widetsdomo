@@ -8,6 +8,7 @@ export const WIDGET_SIZES = {
   '2x4': { width: 185, height: 390 },
   '4x2': { width: 390, height: 185 },
   '4x4': { width: 390, height: 390 },
+  '4x6': { width: 390, height: 595 },
   '2x6': { width: 185, height: 595 },
   '2x8': { width: 185, height: 800 },
 };

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useMeta } from '../../store/metaStore.jsx';
 import SvgIcon from './SvgIcon';
 import IconPicker from './IconPicker';
@@ -140,12 +141,13 @@ export default function NavegadorDashboard({ size, config, onConfigChange }) {
   const icon = <SvgIcon id={iconId} size={iconSize} color={iconColor} />;
   const containerStyle = { cursor: 'pointer', opacity: pressing ? 0.6 : 1, transition: 'opacity 0.1s', userSelect: 'none' };
 
-  const modal = showModal && (
+const modal = showModal && createPortal(
     <ConfigModal
       config={config}
       onSave={c => { onConfigChange(c); setShowModal(false); }}
       onClose={() => setShowModal(false)}
-    />
+    />,
+    document.body
   );
 
   function subLine() {

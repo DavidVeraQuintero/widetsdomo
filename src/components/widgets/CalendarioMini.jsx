@@ -178,21 +178,52 @@ export default function CalendarioMini({ accentColor }) {
   const { month, day, weekday, year } = isoToDateParts(today);
   const dots = Math.min(state.events.filter(e => e.date === today).length, 3);
 
+  const isWeekend = weekday === 0 || weekday === 6;
+  const headerColor = isWeekend ? '#ef4444' : accentColor;
+
   return (
-    <div className="w-body w-center" style={{ cursor: 'pointer' }} {...longPress}>
-      <div style={{ fontSize: 10, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+    <div className="w-body" style={{ padding: 0, gap: 0, cursor: 'pointer', background: 'linear-gradient(to bottom, rgba(255,255,255,0.03), transparent)' }} {...longPress}>
+      {/* Cabecera del día (estilo icono de calendario clásico) */}
+      <div style={{
+        background: headerColor,
+        color: '#fff',
+        textAlign: 'center',
+        fontSize: 9,
+        fontWeight: 800,
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+        padding: '5px 0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+      }}>
         {DAY_NAMES[weekday]}
       </div>
-      <div style={{ fontSize: 38, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
-        {day}
-      </div>
-      <div style={{ fontSize: 11, color: accentColor, fontWeight: 600 }}>
-        {MONTH_SHORT[month]} {year}
-      </div>
-      <div style={{ display: 'flex', gap: 4, marginTop: 4, justifyContent: 'center' }}>
-        {Array.from({ length: dots }).map((_, i) => (
-          <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: accentColor }} />
-        ))}
+      
+      {/* Cuerpo central: Número y Mes */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingBottom: 4 }}>
+        <div style={{ 
+          fontSize: 44, fontWeight: 900, color: 'var(--text-primary)', 
+          lineHeight: 1, letterSpacing: -1, textShadow: '0 2px 12px rgba(0,0,0,0.35)' 
+        }}>
+          {day}
+        </div>
+        <div style={{ 
+          fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700, 
+          textTransform: 'uppercase', letterSpacing: 1, marginTop: 3 
+        }}>
+          {MONTH_SHORT[month]} {year}
+        </div>
+        
+        {/* Puntos de eventos */}
+        <div style={{ display: 'flex', gap: 4, marginTop: 6, height: 4 }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} style={{ 
+              width: 4, height: 4, borderRadius: '50%', 
+              background: i < dots ? headerColor : 'rgba(255,255,255,0.08)',
+              boxShadow: i < dots ? `0 0 6px ${headerColor}88` : 'none'
+            }} />
+          ))}
+        </div>
       </div>
       {modal && <MonthModal onClose={() => setModal(false)} accentColor={accentColor} />}
     </div>

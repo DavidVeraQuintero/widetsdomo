@@ -104,7 +104,7 @@ export const WIDGET_CATALOG = [
     defaultConfig: { name: 'Grupo', icon: 'home', children: [] },
     component: GrupoWidget },
   { id: 'notas', category: 'Organización', categoryIcon: '📦', icon: '📝', name: 'Notas',
-    sizes: ['1x2', '2x2', '2x4', '4x4', '2x6', '2x8'],
+    sizes: ['1x2', '2x2', '2x4', '4x4', '2x6', '4x6'],
     defaultConfig: { name: 'Mis notas', notes: [], activeId: null },
     component: Notas },
   // ── NAVEGACIÓN ──
