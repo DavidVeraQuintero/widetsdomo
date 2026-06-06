@@ -1,0 +1,114 @@
+.layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.floatingPanel {
+  position: absolute;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  min-height: 44px;
+  max-height: 85vh;
+  background: rgba(10, 18, 40, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.dragHandle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 18px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px 14px 0 0;
+  cursor: grab;
+  user-select: none;
+}
+.dragHandle:active { cursor: grabbing; }
+
+.dragDots {
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 14px;
+}
+
+.sidebarToggle {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  background: rgba(15, 25, 50, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.70);
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sidebarToggle:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: var(--accent);
+  color: white;
+}
+
+.tabBar {
+  display: flex;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tabBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.40);
+  font-size: 15px;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.tabBtn:hover { color: rgba(255, 255, 255, 0.75); }
+
+.tabBtnActive {
+  color: white;
+  border-bottom-color: var(--accent);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.tabClose {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 11px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.tabClose:hover { color: var(--danger, #ef4444); }
+
+.tabContent {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}

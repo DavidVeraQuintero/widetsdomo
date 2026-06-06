@@ -1,0 +1,110 @@
+/* Importado una vez en main.jsx — clases compartidas por todos los widgets */
+
+.w-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 6px;
+  overflow: hidden;
+  min-width: 0;
+}
+.w-center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.w-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.50);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.w-name  { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.w-sub   { font-size: 10px; color: var(--text-secondary); }
+.w-row   { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.w-col   { display: flex; flex-direction: column; gap: 4px; }
+.w-fill  { flex: 1; }
+.w-icon  { font-size: 28px; }
+.w-icon-big { font-size: 44px; }
+.w-val-big  { font-size: 32px; font-weight: 700; line-height: 1; }
+.w-val-med  { font-size: 22px; font-weight: 700; line-height: 1; }
+.w-status   { font-size: 10px; }
+.w-divider  { height: 1px; background: var(--border); flex-shrink: 0; }
+
+.w-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.80);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.w-btn:hover { background: rgba(255, 255, 255, 0.16); color: white; }
+.w-btn-sm { padding: 3px 8px; font-size: 11px; }
+.w-btn-row { display: flex; gap: 6px; }
+.w-btn-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.80);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+.w-btn-icon:hover { background: rgba(255, 255, 255, 0.16); color: white; }
+
+.w-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex: 1;
+}
+.w-bar {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.3s;
+}
+
+/* Layout horizontal para 2x1 (185×90px) */
+.w-row-body {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  overflow: hidden;
+  min-width: 0;
+}
+.w-row-body .w-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.w-row-body .w-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.w-alert { color: var(--danger); }
+.w-ok    { color: var(--success); }
+.w-warn  { color: var(--warning); }
+
+@keyframes widgetIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  40%     { transform: translateX(6px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(4px); }
+}
+
+.icon-glow {
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55));
+}

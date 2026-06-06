@@ -1,0 +1,167 @@
+/* Tab bar */
+.bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  background: rgba(15, 25, 50, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+.bar::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+.tab:hover { background: rgba(255, 255, 255, 0.07); color: white; }
+.tab.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent);
+  color: white;
+}
+
+.tabName { flex: 1; }
+
+.renameInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent);
+  color: white;
+  font-size: 12px;
+  outline: none;
+  width: 80px;
+  padding: 0;
+}
+
+.closeBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.tab:hover .closeBtn { display: inline; }
+.closeBtn:hover { color: var(--danger); }
+
+.addBtn {
+  margin-left: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.addBtn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+}
+.addBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Dialog overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.dialog {
+  background: rgba(10, 14, 26, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 20px;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65);
+}
+
+.dialogTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.dialogInput {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: white;
+  outline: none;
+  width: 100%;
+}
+.dialogInput:focus { border-color: var(--accent); }
+.dialogInput::placeholder { color: var(--text-dim); }
+
+.dialogButtons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cancelBtn:hover { background: rgba(255, 255, 255, 0.12); color: white; }
+
+.confirmBtn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.confirmBtn:not(:disabled):hover { opacity: 0.85; }
+.confirmBtn:disabled { opacity: 0.38; cursor: not-allowed; }

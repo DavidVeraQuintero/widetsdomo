@@ -1,0 +1,245 @@
+.picker {
+  padding: 12px;
+}
+
+.section {
+  margin-bottom: 14px;
+}
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+/* Rooms */
+.roomGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.roomBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding: 6px 4px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 9px;
+  color: #94a3b8;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.2;
+}
+.roomBtn:hover { background: rgba(255, 255, 255, 0.10); color: white; }
+.roomBtn.sel { background: rgba(59, 130, 246, 0.20); border-color: #3b82f6; color: white; }
+
+.emoji { font-size: 16px; }
+
+/* Palettes */
+.paletteRow {
+  display: flex;
+  gap: 6px;
+}
+
+.paletteChip {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+  padding: 0;
+}
+.paletteChip:hover { transform: scaleY(1.1); }
+.paletteChip.sel { border-color: white; }
+
+/* Time of day */
+.timePills {
+  display: flex;
+  gap: 4px;
+}
+
+.timePill {
+  flex: 1;
+  padding: 6px 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 9px;
+  line-height: 1.4;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.timePill:hover { background: rgba(255, 255, 255, 0.10); color: white; }
+.timePill.sel { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.28); color: white; }
+
+/* Custom background chips */
+.customChip {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  padding: 0;
+  min-height: 46px;
+  overflow: visible;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  color: white;
+  font-size: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 1;
+  transition: background 0.15s;
+}
+.deleteBtn:hover { background: #ef4444; }
+
+/* Add button */
+.addBtn {
+  border-style: dashed;
+  color: #475569;
+  font-size: 9px;
+}
+.addBtn:hover { color: #94a3b8; }
+
+/* Grid size stepper */
+.gridRow {
+  display: flex;
+  gap: 8px;
+}
+
+.gridField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gridFieldLabel {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stepBtn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.stepBtn:hover { background: rgba(255, 255, 255, 0.10); color: white; }
+
+.stepVal {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+}
+
+/* Dashboard management section */
+.clearSection {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btnRow {
+  display: flex;
+  gap: 6px;
+}
+
+.createBtn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.createBtn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.40);
+  color: white;
+}
+.createBtn:disabled { opacity: 0.30; cursor: not-allowed; }
+
+.dangerBtn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 6px;
+  padding: 6px 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.dangerBtn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.40);
+  color: white;
+}
+.dangerBtn:disabled { opacity: 0.30; cursor: not-allowed; }
+
+.clearBtn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  color: rgba(255, 255, 255, 0.65);
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.clearBtn:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.40);
+  color: white;
+}
+.clearBtn:disabled { opacity: 0.30; cursor: not-allowed; }

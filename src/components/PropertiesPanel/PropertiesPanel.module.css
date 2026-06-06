@@ -1,0 +1,112 @@
+.panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.label {
+  color: var(--text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.sizeBtn {
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 5px;
+  padding: 5px 4px;
+  font-size: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sizeBtn:hover { border-color: var(--border-accent); color: var(--text-primary); }
+.active { background: var(--accent-dim) !important; border-color: var(--accent) !important; color: var(--accent) !important; }
+
+.coordRow { display: flex; gap: 8px; }
+.coordInput {
+  width: 100%;
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 6px;
+  color: var(--text-primary);
+  font-size: 11px;
+  text-align: center;
+  outline: none;
+}
+.coordInput:focus { border-color: var(--border-accent); }
+.coordLabel { color: var(--text-dim); font-size: 9px; text-align: center; margin-top: 2px; }
+
+.colorRow { display: flex; gap: 5px; flex-wrap: wrap; }
+.colorDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.activeDot { border-color: white !important; }
+
+.snapBtn {
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.snapBtn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+.widgetInfo {
+  margin-top: 16px;
+  background: var(--bg-widget);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+.widgetName { font-size: 12px; color: var(--text-primary); margin-bottom: 8px; }
+.deleteBtn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.15s;
+}
+.deleteBtn:hover { background: rgba(239,68,68,0.1); }
+
+.empty {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: center;
+  padding: 20px 10px;
+  line-height: 1.6;
+}

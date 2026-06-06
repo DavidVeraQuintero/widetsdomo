@@ -1,0 +1,141 @@
+import { useState } from 'react';
+import Slider from './Slider';
+import SvgIcon from './SvgIcon';
+import { useWidgetIcons } from './useWidgetIcons';
+import { useLongPress, ModalBase, IconSection } from './widgetUtils';
+
+// Two fabric panels hanging from a rod
+const CurtainVisual = ({ position, color, height = 64 }) => {
+  // position=100 → fully open (panels pulled to edges)
+  // position=0   → fully closed (panels meet in center)
+  const panelPct = (100 - position) / 2; // % of total width each panel occupies
+  return (
+    <div style={{
+      width: '100%', height, borderRadius: 6, overflow: 'hidden', position: 'relative',
+      background: 'linear-gradient(180deg, #0d1b2a 0%, #1a2744 100%)',
+      border: '2px solid var(--border)',
+    }}>
+      {/* Left panel */}
+      <div style={{
+        position: 'absolute', top: 5, left: 0, bottom: 0,
+        width: `${panelPct}%`, minWidth: panelPct > 0 ? 4 : 0,
+        background: `linear-gradient(90deg, ${color}ee 0%, ${color}aa 60%, ${color}55 100%)`,
+        transition: 'width 0.3s ease',
+      }}>
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: 1, background: 'rgba(0,0,0,0.2)' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '65%', width: 1, background: 'rgba(0,0,0,0.15)' }} />
+      </div>
+      {/* Right panel */}
+      <div style={{
+        position: 'absolute', top: 5, right: 0, bottom: 0,
+        width: `${panelPct}%`, minWidth: panelPct > 0 ? 4 : 0,
+        background: `linear-gradient(270deg, ${color}ee 0%, ${color}aa 60%, ${color}55 100%)`,
+        transition: 'width 0.3s ease',
+      }}>
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: '35%', width: 1, background: 'rgba(0,0,0,0.2)' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, right: '65%', width: 1, background: 'rgba(0,0,0,0.15)' }} />
+      </div>
+      {/* Rod */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 6,
+        background: 'linear-gradient(180deg, #888 0%, #555 100%)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+      }} />
+      {/* % badge */}
+      <div style={{
+        position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)',
+        fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.75)',
+        textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap',
+      }}>{position}%</div>
+    </div>
+  );
+};
+
+function CortinaModal({ position, name, config, onConfigChange, onClose, accentColor }) {
+  const icons = useWidgetIcons('cortina', config.icons);
+  const setPos = (v) => onConfigChange({ position: v });
+  return (
+    <ModalBase title="Cortina" onClose={onClose} borderColor={accentColor}>
+      <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>{name}</div>
+      <CurtainVisual position={position} color={accentColor} height={90} />
+      <div style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 9, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Apertura · {position}%</div>
+        <Slider value={position} onChange={setPos} unit="%" />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={() => setPos(100)} onMouseDown={e => e.stopPropagation()}>◀▶ Abrir</button>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={() => setPos(50)} onMouseDown={e => e.stopPropagation()}>■ 50%</button>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={() => setPos(0)} onMouseDown={e => e.stopPropagation()}>▶◀ Cerrar</button>
+      </div>
+      <IconSection typeId="cortina" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
+    </ModalBase>
+  );
+}
+
+export default function Cortina({ size, config, onConfigChange, accentColor }) {
+  const { position = 80, name = 'Cortina' } = config;
+  const [modal, setModal] = useState(false);
+  const setPos = (v) => onConfigChange({ ...config, position: v });
+  const patchConfig = (p) => onConfigChange({ ...config, ...p });
+  const longPress = useLongPress(() => setModal(true));
+  const icons = useWidgetIcons('cortina', config.icons);
+
+  const Modal = modal && (
+    <CortinaModal position={position} name={name} config={config} onConfigChange={patchConfig} onClose={() => setModal(false)} accentColor={accentColor} />
+  );
+
+  if (size === '1x2') return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="w-label">Cortina</div>
+        <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
+      </div>
+      <div className="w-name">{name}</div>
+      <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
+        <CurtainVisual position={position} color={accentColor} height="100%" />
+      </div>
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶</button>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀</button>
+      </div>
+      {Modal}
+    </div>
+  );
+
+  if (size === '2x1') return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', padding: '8px 12px', gap: 10, overflow: 'hidden' }}>
+      <div style={{ width: 52, flexShrink: 0, cursor: 'pointer' }} {...longPress}>
+        <CurtainVisual position={position} color={accentColor} height={48} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="w-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{name}</div>
+        <Slider value={position} onChange={setPos} showVal={false} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 10 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶</button>
+        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 10 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀</button>
+      </div>
+      {Modal}
+    </div>
+  );
+
+  // 2x2
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="w-label">Cortina</div>
+        <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
+      </div>
+      <div className="w-name">{name}</div>
+      <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
+        <CurtainVisual position={position} color={accentColor} height="100%" />
+      </div>
+      <Slider value={position} onChange={setPos} showVal={false} />
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶ Abrir</button>
+        <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀ Cerrar</button>
+      </div>
+      {Modal}
+    </div>
+  );
+}

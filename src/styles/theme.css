@@ -1,0 +1,68 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-base:          #060d1a;
+  --bg-surface:       #0a1628;
+  --bg-widget:        #0f172a;
+  --border:           #1e3a5f;
+  --border-accent:    #3b82f6;
+  --text-primary:     #e2e8f0;
+  --text-secondary:   rgba(255,255,255,0.80);
+  --text-dim:         #475569;
+  --accent:           #3b82f6;
+  --accent-dim:       #1e3a5f;
+  --success:          #22c55e;
+  --danger:           #ef4444;
+  --warning:          #f59e0b;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Theme defaults (overridden by data-* selectors below) ── */
+:root {
+  --bg-photo: url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80');
+  --bg-blur: 4px;
+  --theme-tint: rgba(180, 110, 40, 0.20);
+  --theme-hour-gradient: linear-gradient(180deg, rgba(255,100,0,0.15) 0%, transparent 50%, rgba(15,8,2,0.35) 100%);
+}
+
+/* Rooms */
+:root[data-room="sala"]       { --bg-photo: url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80'); }
+:root[data-room="dormitorio"] { --bg-photo: url('https://images.unsplash.com/photo-1560448204-603b3fc33dfc?w=1200&q=80'); }
+:root[data-room="cocina"]     { --bg-photo: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80'); }
+:root[data-room="jardin"]     { --bg-photo: url('https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&q=80'); }
+
+/* Palettes */
+:root[data-palette="calido"] { --theme-tint: rgba(180, 110, 40, 0.20); }
+:root[data-palette="frio"]   { --theme-tint: rgba(30, 58, 95, 0.25); }
+:root[data-palette="oscuro"] { --theme-tint: rgba(10, 10, 10, 0.35); }
+:root[data-palette="neutro"] { --theme-tint: rgba(100, 100, 100, 0.15); }
+
+/* Time of day */
+:root[data-time="amanecer"]  { --theme-hour-gradient: linear-gradient(180deg, rgba(255,160,80,0.20) 0%, transparent 60%); }
+:root[data-time="dia"]       { --theme-hour-gradient: linear-gradient(180deg, rgba(255,255,180,0.12) 0%, transparent 50%); }
+:root[data-time="atardecer"] { --theme-hour-gradient: linear-gradient(180deg, rgba(255,100,0,0.15) 0%, transparent 50%, rgba(15,8,2,0.35) 100%); }
+:root[data-time="noche"]     { --theme-hour-gradient: linear-gradient(180deg, rgba(0,0,40,0.40) 0%, transparent 60%, rgba(0,5,30,0.50) 100%); }
+
+/* ── Icon states ── */
+:root {
+  --icon-off: rgba(255, 255, 255, 0.55);
+  --icon-on:  rgba(255, 255, 255, 0.95);
+}

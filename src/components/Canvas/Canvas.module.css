@@ -1,0 +1,115 @@
+.wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+
+
+/* ── Canvas area: clips background layers ── */
+.canvasArea {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Background photo layer */
+.canvasBg {
+  position: absolute;
+  inset: 0;
+  background-image: var(--bg-photo);
+  background-size: cover;
+  background-position: center;
+  filter: blur(var(--bg-blur)) brightness(0.65) saturate(1.1);
+  transform: scale(1.04);
+  pointer-events: none;
+  z-index: 0;
+  transition: background-image 0.6s ease, filter 0.4s ease;
+}
+
+/* Palette tint overlay */
+.canvasTint {
+  position: absolute;
+  inset: 0;
+  background: var(--theme-tint);
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.6s ease;
+}
+
+/* Time-of-day gradient overlay */
+.canvasHour {
+  position: absolute;
+  inset: 0;
+  background: var(--theme-hour-gradient);
+  pointer-events: none;
+  z-index: 2;
+  transition: background 0.6s ease;
+}
+
+/* Scrollable widget area */
+.canvas {
+  flex: 1;
+  overflow: auto;
+  z-index: 3;
+  min-height: 0;
+  padding: 60px 20px 20px;
+}
+
+@media (max-width: 600px) {
+  .canvas {
+    padding: 60px 8px 8px;
+  }
+}
+
+.canvasInner {
+  position: relative;
+  flex-shrink: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 4px 32px rgba(0, 0, 0, 0.40);
+  border-radius: 6px;
+}
+
+/* ── Widgets — glassmorphism ── */
+.widget {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  border-radius: 10px;
+  cursor: move;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  animation: widgetIn 0.2s ease-out;
+  user-select: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.widget:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.selected {
+  border-color: rgba(255, 255, 255, 0.50) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15), 0 12px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.colorBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  pointer-events: none;
+  border-radius: 0 0 9px 9px;
+}
