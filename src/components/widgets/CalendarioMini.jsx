@@ -65,9 +65,10 @@ function MonthModal({ onClose, accentColor }) {
   ];
 
   const monthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
-  const eventDates  = new Set(state.events.filter(e => e.date.startsWith(monthPrefix)).map(e => e.date));
+  const allEvents = [...state.events, ...(state.googleEvents || [])];
+  const eventDates  = new Set(allEvents.filter(e => e.date.startsWith(monthPrefix)).map(e => e.date));
 
-  const selectedEvents = state.events
+  const selectedEvents = allEvents
     .filter(e => e.date === selectedDay)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -149,17 +150,23 @@ function MonthModal({ onClose, accentColor }) {
           {selectedEvents.length === 0 && (
             <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center', padding: '8px 0' }}>Sin eventos</div>
           )}
-          {selectedEvents.map(ev => (
-            <div
-              key={ev.id}
-              onMouseDown={stop}
-              onClick={() => setEditingEvent(ev)}
-              style={{ borderLeft: `3px solid ${accentColor}`, padding: '4px 8px', marginBottom: 6, cursor: 'pointer', borderRadius: '0 4px 4px 0', background: 'rgba(255,255,255,0.05)' }}
-            >
-              <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{ev.title}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{ev.startTime} · {formatDuration(ev.duration)}</div>
-            </div>
-          ))}
+          {selectedEvents.map(ev => {
+            const evColor = ev.isGoogle ? ev.accountColor : accentColor;
+            return (
+              <div
+                key={ev.id}
+                onMouseDown={stop}
+                onClick={() => !ev.isGoogle && setEditingEvent(ev)}
+                style={{ borderLeft: `3px solid ${evColor}`, padding: '4px 8px', marginBottom: 6, cursor: ev.isGoogle ? 'default' : 'pointer', borderRadius: '0 4px 4px 0', background: 'rgba(255,255,255,0.05)' }}
+              >
+                <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{ev.title}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
+                  {ev.startTime} · {formatDuration(ev.duration)}
+                  {ev.isGoogle && <span style={{ marginLeft: 6, opacity: 0.5 }}>☁️ Google</span>}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 10, fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
@@ -176,7 +183,8 @@ export default function CalendarioMini({ accentColor }) {
 
   const today = todayISO();
   const { month, day, weekday, year } = isoToDateParts(today);
-  const dots = Math.min(state.events.filter(e => e.date === today).length, 3);
+  const allEvents = [...state.events, ...(state.googleEvents || [])];
+  const dots = Math.min(allEvents.filter(e => e.date === today).length, 3);
 
   const isWeekend = weekday === 0 || weekday === 6;
   const headerColor = isWeekend ? '#ef4444' : accentColor;
