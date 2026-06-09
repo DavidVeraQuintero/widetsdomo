@@ -26,14 +26,21 @@ export default function Canvas() {
     const update = () => {
       const cs = window.getComputedStyle(el);
       const availW = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      // Solo escala para caber mínimo 4 columnas; si hay más, el resto hace scroll
-      const targetW = Math.min(canvasW, 4 * CELL_SIZE);
+      const isMobile = window.innerWidth < 768;
+      // En móvil: 2 columnas; en desktop: 4 columnas
+      const minCols = isMobile ? 2 : 4;
+      const targetW = Math.min(canvasW, minCols * CELL_SIZE);
       setZoom(Math.min(1, availW / targetW));
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    const handleResize = () => update();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
   }, [canvasW]);
 
   const handleDragOver = (e) => {
@@ -95,6 +102,11 @@ export default function Canvas() {
         config: { ...def.defaultConfig },
       },
     });
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.target.closest('[data-widget-id]')) return;
+    e.preventDefault();
   };
 
   const handleClick = (e) => {

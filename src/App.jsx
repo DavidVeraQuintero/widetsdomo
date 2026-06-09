@@ -28,17 +28,37 @@ function AppInner() {
   const [pos, setPos] = useState({ x: 12, y: 12 });
   const dragOffset = useRef(null);
 
-  const startDrag = (e) => {
-    dragOffset.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+  const startDrag = (clientX, clientY, isTouch = false) => {
+    dragOffset.current = { dx: clientX - pos.x, dy: clientY - pos.y };
     const onMove = (e) => {
-      setPos({ x: e.clientX - dragOffset.current.dx, y: e.clientY - dragOffset.current.dy });
+      const x = isTouch && e.touches ? e.touches[0].clientX : e.clientX;
+      const y = isTouch && e.touches ? e.touches[0].clientY : e.clientY;
+      setPos({ x: x - dragOffset.current.dx, y: y - dragOffset.current.dy });
     };
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchmove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchend', onUp);
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    if (isTouch) {
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    } else {
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    startDrag(e.clientX, e.clientY, false);
+    e.preventDefault();
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    startDrag(touch.clientX, touch.clientY, true);
     e.preventDefault();
   };
 
@@ -49,7 +69,7 @@ function AppInner() {
         <Canvas />
         {sidebarOpen ? (
           <div className={styles.floatingPanel} style={{ left: pos.x, top: pos.y }}>
-            <div className={styles.dragHandle} onMouseDown={startDrag}>
+            <div className={styles.dragHandle} onMouseDown={handleMouseDown} onTouchStart={handleTouchStart}>
               <span className={styles.dragDots}>⠿</span>
             </div>
             <div className={styles.tabBar}>

@@ -81,16 +81,15 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
       ? computeOnCardStyle(state.theme.rgbStyle)
       : {};
 
-  const handleMouseDown = (e) => {
-    if (e.target.closest('input, button, select, textarea')) return;
-    e.stopPropagation();
-    e.preventDefault();
+  const startDrag = (clientX, clientY, isTouch = false) => {
+    if (isTouch && !clientX) return;
+    if (document.querySelector('input, button, select, textarea')) return;
 
     dispatch({ type: 'SELECT_WIDGET', id: widget.id });
 
     dragging.current = true;
     origin.current = {
-      mx: e.clientX, my: e.clientY,
+      mx: clientX, my: clientY,
       wx: widget.x,  wy: widget.y,
     };
 
@@ -109,9 +108,11 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
 
     const onMove = (e) => {
       if (!dragging.current) return;
+      const x = isTouch && e.touches ? e.touches[0].clientX : e.clientX;
+      const y = isTouch && e.touches ? e.touches[0].clientY : e.clientY;
       const [nx, ny] = clamp(
-        origin.current.wx + (e.clientX - origin.current.mx) / zoom,
-        origin.current.wy + (e.clientY - origin.current.my) / zoom,
+        origin.current.wx + (x - origin.current.mx) / zoom,
+        origin.current.wy + (y - origin.current.my) / zoom,
       );
       dispatch({ type: 'MOVE_WIDGET', id: widget.id, x: nx, y: ny });
     };
@@ -119,13 +120,16 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
     const onUp = (ev) => {
       dragging.current = false;
       document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
       document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchend', onUp);
 
-      // Detectar si el widget quedó encima de un grupo al soltar
       if (widget.type !== 'grupo') {
+        const finalClientX = isTouch && ev.changedTouches ? ev.changedTouches[0].clientX : ev.clientX;
+        const finalClientY = isTouch && ev.changedTouches ? ev.changedTouches[0].clientY : ev.clientY;
         const [finalX, finalY] = clamp(
-          origin.current.wx + (ev.clientX - origin.current.mx) / zoom,
-          origin.current.wy + (ev.clientY - origin.current.my) / zoom,
+          origin.current.wx + (finalClientX - origin.current.mx) / zoom,
+          origin.current.wy + (finalClientY - origin.current.my) / zoom,
         );
         const s  = WIDGET_SIZES[widget.size] || WIDGET_SIZES['2x2'];
         const cx = finalX + s.width  / 2;
@@ -150,8 +154,28 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
       }
     };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    if (isTouch) {
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onUp);
+    } else {
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.target.closest('input, button, select, textarea')) return;
+    e.stopPropagation();
+    e.preventDefault();
+    startDrag(e.clientX, e.clientY, false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.target.closest('input, button, select, textarea')) return;
+    if (e.touches.length !== 1) return;
+    e.stopPropagation();
+    const touch = e.touches[0];
+    startDrag(touch.clientX, touch.clientY, true);
   };
 
   return (
@@ -166,6 +190,7 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
         ...rgbCardStyle,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       {WidgetComponent ? (
         <WidgetComponent

@@ -108,3 +108,17 @@
 .icon-glow {
   filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55));
 }
+
+@media (max-width: 768px) {
+  .w-label { font-size: 12px; letter-spacing: 0.5px; }
+  .w-name  { font-size: 14px; }
+  .w-sub   { font-size: 12px; }
+  .w-status { font-size: 12px; }
+  .w-icon  { font-size: 32px; }
+  .w-icon-big { font-size: 48px; }
+  .w-val-big  { font-size: 36px; }
+  .w-val-med  { font-size: 26px; }
+  .w-btn { padding: 6px 12px; font-size: 14px; }
+  .w-btn-sm { padding: 4px 10px; font-size: 12px; }
+  .w-btn-icon { width: 36px; height: 36px; font-size: 18px; }
+}

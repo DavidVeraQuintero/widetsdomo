@@ -92,6 +92,7 @@
   animation: widgetIn 0.2s ease-out;
   user-select: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  touch-action: none;
 }
 
 .widget:hover {
@@ -102,6 +103,12 @@
 .selected {
   border-color: rgba(255, 255, 255, 0.50) !important;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15), 0 12px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 768px) {
+  .widget {
+    font-size: 14px;
+  }
 }
 
 .colorBar {
