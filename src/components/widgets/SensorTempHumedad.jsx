@@ -16,13 +16,13 @@ function TempHumedadModal({ temp, humidity, name, config, onConfigChange, onClos
         <div style={{ textAlign:'center' }}>
           <span style={{ fontSize:32 }}>🌡</span>
           <div style={{ fontSize:36, fontWeight:700, color:'var(--text-primary)', marginTop:4 }}>{temp}°C</div>
-          <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:4 }}>Temperatura</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', marginTop:4 }}>Temperatura</div>
         </div>
         <div style={{ width:1, background:'var(--border)' }} />
         <div style={{ textAlign:'center' }}>
           <span style={{ fontSize:32 }}>💧</span>
           <div style={{ fontSize:36, fontWeight:700, color:'var(--text-secondary)', marginTop:4 }}>{humidity}%</div>
-          <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:4 }}>Humedad</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', marginTop:4 }}>Humedad</div>
         </div>
       </div>
       <IconSection typeId="sensor-temp" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
@@ -42,20 +42,21 @@ export default function SensorTempHumedad({ size, config, onConfigChange, accent
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', cursor:'pointer' }} {...longPress}>
-        <div style={{ fontSize:22, fontWeight:700, color:'var(--text-primary)', lineHeight:1 }}>{temp}°</div>
-        <div style={{ fontSize:11, color:'var(--text-secondary)', marginTop:2 }}>{humidity}%</div>
+    <div className="w-body" style={{ alignItems:'center' }}>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
+      <div style={{ marginTop:'auto', display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', cursor:'pointer' }} {...longPress}>
+          <div style={{ fontSize:22, fontWeight:700, color:'var(--text-primary)', lineHeight:1 }}>{temp}°</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', marginTop:2 }}>{humidity}%</div>
+        </div>
+        <div style={{ width:6, height:6, borderRadius:'50%', background:accentColor }} />
       </div>
-      <div style={{ width:6, height:6, borderRadius:'50%', background:accentColor }} />
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">🌡 Sensor</div>
       <div className="w-val-big" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{temp}°C</div>
       <div className="w-sub">Temperatura</div>
       <div className="w-divider" />
@@ -66,19 +67,23 @@ export default function SensorTempHumedad({ size, config, onConfigChange, accent
   );
 
   if (size === '2x1') return (
-    <div className="w-row-body">
-      <span style={{ fontSize:24, cursor:'pointer' }} {...longPress}>🌡</span>
-      <div className="w-info">
-        <div className="w-name">{name}</div>
+    <div style={{ height:'100%', display:'flex', alignItems:'center', padding:'8px 10px', gap:8, overflow:'hidden' }}>
+      <span style={{ cursor:'pointer', flexShrink:0 }} {...longPress}>
+        <SvgIcon id={icons.default} size={32} color="var(--icon-on)" className="icon-glow" />
+      </span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
       </div>
-      <div style={{ textAlign:'center' }}>
-        <div className="w-val-med" style={{ color:'var(--text-primary)' }}>{temp}°C</div>
-        <div style={{ fontSize:9, color:'var(--text-secondary)' }}>temp</div>
-      </div>
-      <div style={{ width:1, height:30, background:'var(--border)', flexShrink:0 }} />
-      <div style={{ textAlign:'center' }}>
-        <div className="w-val-med" style={{ color:'var(--text-secondary)' }}>{humidity}%</div>
-        <div style={{ fontSize:9, color:'var(--text-secondary)' }}>HR</div>
+      <div style={{ display:'flex', gap:6, flexShrink:0, alignItems:'center' }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:16, fontWeight:700, color:'var(--text-primary)', lineHeight:1.1 }}>{temp}°C</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Temp</div>
+        </div>
+        <div style={{ width:1, height:24, background:'var(--border)', flexShrink:0 }} />
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:16, fontWeight:700, color:'var(--text-secondary)', lineHeight:1.1 }}>{humidity}%</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>HR</div>
+        </div>
       </div>
       {Modal}
     </div>
@@ -86,7 +91,6 @@ export default function SensorTempHumedad({ size, config, onConfigChange, accent
 
   return (
     <div className="w-body w-center">
-      <div className="w-label">🌡 Temperatura / Humedad</div>
       <div className="w-name">{name}</div>
       <div style={{ display:'flex', gap:20, alignItems:'center', flex:1, cursor:'pointer' }} {...longPress}>
         <div className="w-col w-center">

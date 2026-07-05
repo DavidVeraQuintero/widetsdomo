@@ -44,17 +44,17 @@ export default function SensorInundacion({ size, config, onConfigChange, accentC
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={alert ? icons.alert : icons.ok} size={44} color={alert ? 'var(--icon-on)' : 'var(--icon-off)'} className={alert ? 'icon-glow' : ''} /></span>
-      <span style={{ fontSize:11, color:'var(--text-primary)' }}>{alert ? '⚠ AGUA' : '✓ Seco'}</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={alert ? icons.alert : icons.ok} size={44} color={alert ? 'var(--icon-on)' : 'var(--icon-off)'} className={alert ? 'icon-glow' : ''} /></span>
+        <span style={{ fontSize:12, color:'var(--text-primary)' }}>{alert ? '⚠ AGUA' : '✓ Seco'}</span>
+      </div>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">💧 Inundación</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={alert ? icons.alert : icons.ok} size={44} color={alert ? 'var(--icon-on)' : 'var(--icon-off)'} className={alert ? 'icon-glow' : ''} /></span>
       <div className="w-name">{name}</div>
       <div className="w-status" style={{ color:'var(--text-primary)' }}>{alert ? '⚠ Agua detectada' : '✓ Superficie seca'}</div>

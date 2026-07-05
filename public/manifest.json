@@ -1,0 +1,15 @@
+{
+  "name": "Dashboard Domótica",
+  "short_name": "Domótica",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080f1e",
+  "theme_color": "#080f1e",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

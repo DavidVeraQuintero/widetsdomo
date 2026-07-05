@@ -1,34 +1,61 @@
-/* Tab bar */
+/* Tab bar — centered in the space to the right of the sidebar toggle (56px) */
 .bar {
   position: absolute;
   top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 80px;
+  right: 80px;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: calc(100% - 160px);
   z-index: 20;
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
+  gap: 4px;
+  padding: 3px 5px;
   background: rgba(15, 25, 50, 0.28);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 999px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollable tabs area */
+.tabsWrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
-  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 40px;
+  max-width: calc(100vw - 100px);
 }
-.bar::-webkit-scrollbar { display: none; }
+.tabsWrapper::-webkit-scrollbar { display: none; }
+
+/* Scroll arrows */
+.arrow {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 999px;
+  transition: color 0.15s, background 0.15s;
+}
+.arrow:hover { color: white; background: rgba(255, 255, 255, 0.15); }
 
 .tab {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
+  gap: 4px;
+  padding: 3px 9px;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   border: 1px solid transparent;
   transition: background 0.15s, border-color 0.15s, color 0.15s;

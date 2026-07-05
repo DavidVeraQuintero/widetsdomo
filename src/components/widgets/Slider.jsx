@@ -13,7 +13,7 @@ export default function Slider({ value, min = 0, max = 100, onChange, unit = '',
         style={{ background: `linear-gradient(to right, rgba(255,255,255,0.75) ${pct}%, rgba(255,255,255,0.12) ${pct}%)` }}
         onChange={e => onChange(Number(e.target.value))}
         onMouseDown={e => e.stopPropagation()}
-        onClick={e => e.stopPropagation()}
+        onTouchStart={e => e.stopPropagation()}
       />
       {showVal && (
         <span className={styles.sliderVal}>{value}{unit}</span>

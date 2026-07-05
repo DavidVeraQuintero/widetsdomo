@@ -2,3 +2,16 @@ node_modules
 dist
 .env
 .superpowers
+server/data.db
+server/uploads/*
+!server/uploads/.gitkeep
+videos/
+.playwright-mcp/
+test-results/
+*.log
+verify-*.png
+calendar-snapshot.md
+snapshot-current.md
+dev-server.log
+test-*.mjs
+test-*.js

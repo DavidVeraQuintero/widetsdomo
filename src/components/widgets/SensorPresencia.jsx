@@ -20,7 +20,7 @@ function PresenciaModal({ present, name, config, onConfigChange, onClose }) {
       <div style={{ display:'flex', justifyContent:'center', marginBottom:20 }}>
         <div style={{ width:16, height:16, borderRadius:'50%', background:col, boxShadow:present ? `0 0 14px ${col}` : 'none' }} />
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:8, textAlign:'center' }}>Simulación</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:8, textAlign:'center' }}>Simulación</div>
       <button className="w-btn" style={{ width:'100%' }}
         onClick={() => onConfigChange({ present: !present })}
         onMouseDown={e => e.stopPropagation()}>
@@ -44,17 +44,17 @@ export default function SensorPresencia({ size, config, onConfigChange, accentCo
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={present ? icons.present : icons.absent} size={44} color={present ? 'var(--icon-on)' : 'var(--icon-off)'} className={present ? 'icon-glow' : ''} /></span>
-      <span style={{ fontSize:11, color:'var(--text-primary)' }}>{present ? 'Presente' : 'Vacío'}</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={present ? icons.present : icons.absent} size={44} color={present ? 'var(--icon-on)' : 'var(--icon-off)'} className={present ? 'icon-glow' : ''} /></span>
+        <span style={{ fontSize:12, color:'var(--text-primary)' }}>{present ? 'Presente' : 'Vacío'}</span>
+      </div>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">🧑 Presencia</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={present ? icons.present : icons.absent} size={44} color={present ? 'var(--icon-on)' : 'var(--icon-off)'} className={present ? 'icon-glow' : ''} /></span>
       <div className="w-name">{name}</div>
       <div className="w-status" style={{ color:'var(--text-primary)' }}>{present ? '● Presencia detectada' : '○ Zona vacía'}</div>
@@ -63,7 +63,7 @@ export default function SensorPresencia({ size, config, onConfigChange, accentCo
   );
 
   return (
-    <div className="w-row-body">
+    <div className="w-row-body" style={{ gap:12 }}>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={present ? icons.present : icons.absent} size={28} color={present ? 'var(--icon-on)' : 'var(--icon-off)'} className={present ? 'icon-glow' : ''} /></span>
       <div className="w-info">
         <div className="w-name">{name}</div>

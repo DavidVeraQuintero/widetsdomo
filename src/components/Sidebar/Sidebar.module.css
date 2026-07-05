@@ -5,12 +5,12 @@
 
 .header {
   padding: 14px 12px 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
   flex-shrink: 0;
 }
 
 .appName {
-  color: var(--accent);
+  color: white;
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 8px;
@@ -18,15 +18,16 @@
 
 .search {
   width: 100%;
-  background: var(--bg-widget);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   padding: 6px 10px;
-  color: var(--text-secondary);
+  color: white;
   font-size: 12px;
   outline: none;
 }
-.search:focus { border-color: var(--border-accent); }
+.search::placeholder { color: rgba(255,255,255,0.40); }
+.search:focus { border-color: var(--accent); }
 
 .list {
   flex: 1;
@@ -35,35 +36,41 @@
 
 .category {
   padding: 8px 12px 4px;
-  color: var(--accent);
-  font-size: 10px;
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 .item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 12px;
+  padding: 10px 12px;
   margin: 1px 6px;
   border-radius: 6px;
   cursor: grab;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: white;
   transition: background 0.15s, color 0.15s;
   user-select: none;
+  min-height: 44px;
+  touch-action: manipulation;
 }
-.item:hover { background: var(--accent-dim); color: var(--text-primary); }
+.item:hover { background: rgba(59,130,246,0.15); }
 .item:active { cursor: grabbing; }
 
 .itemIcon { font-size: 16px; width: 20px; text-align: center; }
 .itemName { flex: 1; }
 .itemBadge {
-  background: var(--bg-widget);
-  color: var(--accent);
-  font-size: 9px;
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
   padding: 1px 5px;
   border-radius: 4px;
 }
+.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
+.lockedIcon { filter: grayscale(1); }
+.itemLock { font-size: 10px; margin-left: auto; }
+.itemDeviceBadge { background: #22c55e; color: #fff; border-radius: 20px; padding: 1px 7px; font-size: 9px; font-weight: 700; margin-left: auto; }

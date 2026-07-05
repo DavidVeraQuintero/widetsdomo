@@ -13,24 +13,24 @@ function ConsumoModal({ kwh, name, onClose, accentColor }) {
     >
       <div style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:13, marginBottom:8 }}>{name}</div>
       <div style={{ textAlign:'center', fontSize:36, fontWeight:700, color:'var(--text-primary)', marginBottom:4 }}>{kwh} kWh</div>
-      <div style={{ textAlign:'center', fontSize:10, color:'var(--text-secondary)', marginBottom:14 }}>consumidos hoy</div>
+      <div style={{ textAlign:'center', fontSize:12, color:'var(--text-secondary)', marginBottom:14 }}>consumidos hoy</div>
       <div className="w-bar-chart" style={{ height:80 }}>
         {BARS.map((v, i) => (
           <div key={i} className="w-bar" style={{ height:`${(v / maxBar) * 100}%`, background:i === BARS.length - 1 ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.15)' }} />
         ))}
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', textAlign:'center', marginTop:4, marginBottom:14 }}>Últimas 12h</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', marginTop:4, marginBottom:14 }}>Últimas 12h</div>
       <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderTop:'1px solid var(--border)' }}>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>Pico</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Pico</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>6.1 kW</div>
         </div>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>Promedio</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Promedio</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>4.6 kW</div>
         </div>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>Coste est.</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Coste est.</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>€1.86</div>
         </div>
       </div>
@@ -58,7 +58,6 @@ export default function MedidorConsumo({ size, config, accentColor }) {
 
   if (size === '2x2') return (
     <div className="w-body">
-      <div className="w-label">📊 Consumo</div>
       <div className="w-row">
         <div className="w-name">{name}</div>
         <div className="w-val-med" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{kwh} kWh</div>
@@ -71,7 +70,6 @@ export default function MedidorConsumo({ size, config, accentColor }) {
 
   return (
     <div className="w-body">
-      <div className="w-label">📊 Medidor de Consumo</div>
       <div className="w-name">{name}</div>
       <div style={{ textAlign:'center', padding:'8px 0', cursor:'pointer' }} {...longPress}>
         <div className="w-val-big" style={{ color:'var(--text-primary)' }}>{kwh} kWh</div>

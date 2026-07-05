@@ -98,7 +98,7 @@ export default function PropertiesPanel() {
 
       <div className={styles.widgetInfo}>
         <div className={styles.widgetName}>{def?.icon} {def?.name}</div>
-        <div style={{ color: 'var(--text-dim)', fontSize: 10, marginBottom: 8 }}>
+        <div className={styles.widgetMeta}>
           {selected.type} · {selected.size}
           {parentGroupId && <span style={{ marginLeft: 6, opacity: 0.7 }}>· en grupo</span>}
         </div>

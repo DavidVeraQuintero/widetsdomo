@@ -11,11 +11,11 @@ function MusicaModal({ config, onConfigChange, onClose, accentColor }) {
     <ModalBase title="🎵 Música" onClose={onClose} borderColor={accentColor}>
       <div style={{ display:'flex', gap:12, alignItems:'center', marginBottom:16 }}>
         <div style={{ width:72, height:72, borderRadius:10, background:`linear-gradient(135deg,var(--accent-dim),${accentColor}44)`, display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid var(--border)', flexShrink:0 }}>
-          <SvgIcon id={icons.default} size={28} color={playing ? 'var(--icon-on)' : 'var(--icon-off)'} className={playing ? 'icon-glow' : ''} />
+          <SvgIcon id={icons.default} size={32} color={playing ? 'var(--icon-on)' : 'var(--icon-off)'} className={playing ? 'icon-glow' : ''} />
         </div>
         <div style={{ minWidth:0 }}>
           <div style={{ color:'#e2e8f0', fontWeight:600, fontSize:13, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{track}</div>
-          <div style={{ color:'var(--text-secondary)', fontSize:11, marginTop:4 }}>{artist}</div>
+          <div style={{ color:'var(--text-secondary)', fontSize:12, marginTop:4 }}>{artist}</div>
         </div>
       </div>
       <div style={{ display:'flex', justifyContent:'center', gap:16, marginBottom:16 }}>
@@ -26,7 +26,7 @@ function MusicaModal({ config, onConfigChange, onClose, accentColor }) {
             onMouseDown={e => e.stopPropagation()}>{icon}</button>
         ))}
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Volumen · {volume}</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Volumen · {volume}</div>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
         <span style={{ fontSize:12 }}>🔇</span>
         <Slider value={volume} onChange={v => onConfigChange({ ...config, volume: v })} showVal={false} />
@@ -70,7 +70,7 @@ export default function Musica({ size, config, onConfigChange, accentColor }) {
     <MusicaModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} accentColor={accentColor} />
   );
 
-  // ── 1x2 ──────────────────────────────────────────────
+  // ── 1x2 ──────────────────────────────────────────
   if (size === '1x2') return (
     <div className="w-body">
       <div style={{ display:'flex', justifyContent:'flex-end' }}>
@@ -80,23 +80,23 @@ export default function Musica({ size, config, onConfigChange, accentColor }) {
         <Cover sz={56} longPress={longPress} iconId={icons.default} accentColor={accentColor} playing={playing} />
       </div>
       <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{track}</div>
-      <div style={{ fontSize:10, color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{artist}</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{artist}</div>
       {Modal}
     </div>
   );
 
-  // ── 2x2 ──────────────────────────────────────────────
+  // ── 2x2 ──────────────────────────────────────────
   if (size === '2x2') return (
     <div className="w-body">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div className="w-label">🎵 Música</div>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
         <PlayBtn playing={playing} onToggle={togglePlay} accentColor={accentColor} />
       </div>
       <div style={{ display:'flex', gap:10, alignItems:'center', flex:1 }}>
         <Cover sz={52} longPress={longPress} iconId={icons.default} accentColor={accentColor} playing={playing} />
         <div style={{ flex:1, minWidth:0 }}>
           <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{track}</div>
-          <div style={{ fontSize:10, color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:2 }}>{artist}</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:2 }}>{artist}</div>
         </div>
       </div>
       <div style={{ display:'flex', justifyContent:'center', gap:24 }}>
@@ -104,14 +104,14 @@ export default function Musica({ size, config, onConfigChange, accentColor }) {
         <button className="w-btn-icon" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏭</button>
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-        <span style={{ fontSize:9, color:'var(--text-secondary)', flexShrink:0 }}>{volume}</span>
+        <span style={{ fontSize:12, color:'var(--text-secondary)', flexShrink:0 }}>{volume}</span>
         <Slider value={volume} onChange={setVolume} showVal={false} />
       </div>
       {Modal}
     </div>
   );
 
-  // ── 2x1 ──────────────────────────────────────────────
+  // ── 2x1 ──────────────────────────────────────────
   if (size === '2x1') return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'10px 12px' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -123,20 +123,20 @@ export default function Musica({ size, config, onConfigChange, accentColor }) {
         <PlayBtn playing={playing} onToggle={togglePlay} accentColor={accentColor} />
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-        <button className="w-btn-icon" style={{ width:20, height:20, fontSize:11, flexShrink:0 }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏮</button>
-        <span style={{ fontSize:9, color:'var(--text-secondary)', flexShrink:0 }}>{volume}</span>
+        <button className="w-btn-icon" style={{ width:20, height:20, fontSize:12, flexShrink:0 }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏮</button>
+        <span style={{ fontSize:12, color:'var(--text-secondary)', flexShrink:0 }}>{volume}</span>
         <Slider value={volume} onChange={setVolume} showVal={false} />
-        <button className="w-btn-icon" style={{ width:20, height:20, fontSize:11, flexShrink:0 }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏭</button>
+        <button className="w-btn-icon" style={{ width:20, height:20, fontSize:12, flexShrink:0 }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏭</button>
       </div>
       {Modal}
     </div>
   );
 
-  // ── 4x4 ──────────────────────────────────────────────
+  // ── 4x4 ──────────────────────────────────────────
   return (
     <div className="w-body">
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div className="w-label">🎵 Reproductor</div>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
         <PlayBtn playing={playing} onToggle={togglePlay} accentColor={accentColor} size={32} />
       </div>
       <div style={{ display:'flex', gap:16, flex:1, alignItems:'center' }}>
@@ -149,9 +149,9 @@ export default function Musica({ size, config, onConfigChange, accentColor }) {
             <button className="w-btn-icon" style={{ width:36, height:36, fontSize:16 }} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>⏭</button>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ fontSize:10 }}>🔇</span>
+            <span style={{ fontSize:12 }}>🔇</span>
             <Slider value={volume} onChange={setVolume} showVal={false} />
-            <span style={{ fontSize:10, color:'var(--text-secondary)' }}>{volume}</span>
+            <span style={{ fontSize:12, color:'var(--text-secondary)' }}>{volume}</span>
           </div>
         </div>
       </div>

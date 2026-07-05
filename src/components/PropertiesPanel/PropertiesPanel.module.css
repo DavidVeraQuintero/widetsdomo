@@ -6,19 +6,19 @@
 }
 
 .title {
-  color: var(--accent);
+  color: white;
   font-size: 12px;
   font-weight: 700;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
   margin-bottom: 4px;
 }
 
 .label {
-  color: var(--text-dim);
-  font-size: 9px;
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   margin-top: 12px;
   margin-bottom: 6px;
 }
@@ -30,33 +30,33 @@
 }
 
 .sizeBtn {
-  background: var(--bg-widget);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
   border-radius: 5px;
   padding: 5px 4px;
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   cursor: pointer;
   transition: all 0.15s;
 }
-.sizeBtn:hover { border-color: var(--border-accent); color: var(--text-primary); }
-.active { background: var(--accent-dim) !important; border-color: var(--accent) !important; color: var(--accent) !important; }
+.sizeBtn:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.28); }
+.active { background: rgba(59,130,246,0.25) !important; border-color: var(--accent) !important; color: white !important; }
 
 .coordRow { display: flex; gap: 8px; }
 .coordInput {
   width: 100%;
-  background: var(--bg-widget);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 5px;
   padding: 5px 6px;
-  color: var(--text-primary);
-  font-size: 11px;
+  color: white;
+  font-size: 12px;
   text-align: center;
   outline: none;
 }
-.coordInput:focus { border-color: var(--border-accent); }
-.coordLabel { color: var(--text-dim); font-size: 9px; text-align: center; margin-top: 2px; }
+.coordInput:focus { border-color: var(--accent); }
+.coordLabel { color: rgba(255,255,255,0.70); font-size: 12px; text-align: center; margin-top: 2px; }
 
 .colorRow { display: flex; gap: 5px; flex-wrap: wrap; }
 .colorDot {
@@ -70,42 +70,44 @@
 .activeDot { border-color: white !important; }
 
 .snapBtn {
-  background: var(--bg-widget);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
   border-radius: 5px;
   padding: 5px 10px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
 }
-.snapBtn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.snapBtn.active { background: rgba(59,130,246,0.25); border-color: var(--accent); color: white; }
 
 .widgetInfo {
   margin-top: 16px;
-  background: var(--bg-widget);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 10px;
 }
-.widgetName { font-size: 12px; color: var(--text-primary); margin-bottom: 8px; }
+.widgetName { font-size: 12px; color: white; margin-bottom: 4px; }
+.widgetMeta { font-size: 12px; color: rgba(255,255,255,0.65); margin-bottom: 8px; }
 .deleteBtn {
   width: 100%;
-  background: transparent;
-  border: 1px solid var(--danger);
-  color: var(--danger);
+  background: rgba(239,68,68,0.18);
+  border: 1px solid rgba(239,68,68,0.60);
+  color: #fca5a5;
   border-radius: 6px;
-  padding: 5px;
+  padding: 7px;
   cursor: pointer;
-  font-size: 11px;
-  transition: background 0.15s;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.deleteBtn:hover { background: rgba(239,68,68,0.1); }
+.deleteBtn:hover { background: rgba(239,68,68,0.35); border-color: #ef4444; color: white; }
 
 .empty {
-  color: var(--text-dim);
-  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  font-size: 12px;
   text-align: center;
   padding: 20px 10px;
   line-height: 1.6;

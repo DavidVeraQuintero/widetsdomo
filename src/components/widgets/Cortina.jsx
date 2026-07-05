@@ -41,12 +41,6 @@ const CurtainVisual = ({ position, color, height = 64 }) => {
         background: 'linear-gradient(180deg, #888 0%, #555 100%)',
         boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
       }} />
-      {/* % badge */}
-      <div style={{
-        position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)',
-        fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.75)',
-        textShadow: '0 1px 3px rgba(0,0,0,0.9)', whiteSpace: 'nowrap',
-      }}>{position}%</div>
     </div>
   );
 };
@@ -59,7 +53,7 @@ function CortinaModal({ position, name, config, onConfigChange, onClose, accentC
       <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>{name}</div>
       <CurtainVisual position={position} color={accentColor} height={90} />
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 9, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Apertura · {position}%</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Apertura · {position}%</div>
         <Slider value={position} onChange={setPos} unit="%" />
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
@@ -85,16 +79,13 @@ export default function Cortina({ size, config, onConfigChange, accentColor }) {
   );
 
   if (size === '1x2') return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="w-label">Cortina</div>
-        <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
-      </div>
-      <div className="w-name">{name}</div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '8px 10px 10px', gap: 5, overflow: 'hidden' }}>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flexShrink:0 }}>{name}</div>
       <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
         <CurtainVisual position={position} color={accentColor} height="100%" />
       </div>
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, textAlign: 'center', flexShrink:0 }}>{position}%</div>
+      <div style={{ display: 'flex', gap: 5, flexShrink:0 }}>
         <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶</button>
         <button className="w-btn w-btn-sm" style={{ flex: 1 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀</button>
       </div>
@@ -108,12 +99,13 @@ export default function Cortina({ size, config, onConfigChange, accentColor }) {
         <CurtainVisual position={position} color={accentColor} height={48} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="w-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{name}</div>
+        <div className="w-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: '2px 0 4px' }}>{position}%</div>
         <Slider value={position} onChange={setPos} showVal={false} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 10 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶</button>
-        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 10 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀</button>
+        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 12 }} onClick={e => { e.stopPropagation(); setPos(100); }} onMouseDown={e => e.stopPropagation()}>◀▶</button>
+        <button className="w-btn-icon" style={{ width: 22, height: 22, fontSize: 12 }} onClick={e => { e.stopPropagation(); setPos(0); }} onMouseDown={e => e.stopPropagation()}>▶◀</button>
       </div>
       {Modal}
     </div>
@@ -123,10 +115,9 @@ export default function Cortina({ size, config, onConfigChange, accentColor }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="w-label">Cortina</div>
-        <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0, marginRight:6 }}>{name}</div>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, flexShrink:0 }}>{position}%</span>
       </div>
-      <div className="w-name">{name}</div>
       <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
         <CurtainVisual position={position} color={accentColor} height="100%" />
       </div>

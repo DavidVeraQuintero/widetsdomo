@@ -13,24 +13,24 @@ function SolarModal({ kw, name, onClose }) {
     >
       <div style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:13, marginBottom:8 }}>{name}</div>
       <div style={{ textAlign:'center', fontSize:36, fontWeight:700, color:'var(--text-primary)', marginBottom:4 }}>{kw} kW</div>
-      <div style={{ textAlign:'center', fontSize:10, color:'var(--text-secondary)', marginBottom:14 }}>generando ahora</div>
+      <div style={{ textAlign:'center', fontSize:12, color:'var(--text-secondary)', marginBottom:14 }}>generando ahora</div>
       <div className="w-bar-chart" style={{ height:80 }}>
         {BARS.map((v, i) => (
-          <div key={i} className="w-bar" style={{ height:`${(v / maxBar) * 100}%`, background:i === 6 ? '#fbbf24' : 'var(--accent-dim)' }} />
+          <div key={i} className="w-bar" style={{ height:`${(v / maxBar) * 100}%`, background:'rgba(255,255,255,0.85)' }} />
         ))}
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', textAlign:'center', marginTop:4, marginBottom:14 }}>Producción últimas 12h</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', marginTop:4, marginBottom:14 }}>Producción últimas 12h</div>
       <div style={{ display:'flex', justifyContent:'space-between', padding:'10px 0', borderTop:'1px solid var(--border)' }}>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>Hoy total</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Hoy total</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>18.4 kWh</div>
         </div>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>Ahorro est.</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Ahorro est.</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>€2.76</div>
         </div>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>CO₂ evit.</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>CO₂ evit.</div>
           <div style={{ color:'var(--text-primary)', fontWeight:600 }}>8.3 kg</div>
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function PanelSolar({ size, config, accentColor }) {
   const Chart = ({ height }) => (
     <div className="w-bar-chart" style={{ height }}>
       {BARS.map((v, i) => (
-        <div key={i} className="w-bar" style={{ height:`${(v / maxBar) * 100}%`, background:i === 6 ? '#fbbf24' : 'var(--accent-dim)' }} />
+        <div key={i} className="w-bar" style={{ height:`${(v / maxBar) * 100}%`, background:'rgba(255,255,255,0.85)' }} />
       ))}
     </div>
   );
@@ -58,7 +58,6 @@ export default function PanelSolar({ size, config, accentColor }) {
 
   if (size === '2x2') return (
     <div className="w-body">
-      <div className="w-label">☀ Panel Solar</div>
       <div className="w-row">
         <div className="w-name">{name}</div>
         <div className="w-val-med" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{kw} kW</div>
@@ -71,7 +70,6 @@ export default function PanelSolar({ size, config, accentColor }) {
 
   return (
     <div className="w-body">
-      <div className="w-label">☀ Panel Solar</div>
       <div className="w-name">{name}</div>
       <div style={{ textAlign:'center', padding:'8px 0', cursor:'pointer' }} {...longPress}>
         <div className="w-val-big" style={{ color:'var(--text-primary)' }}>{kw} kW</div>

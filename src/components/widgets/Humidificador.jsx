@@ -42,46 +42,50 @@ export default function Humidificador({ size, config, onConfigChange, accentColo
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
-        <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
-      </span>
-      <span style={{ fontSize:11, color:'var(--text-primary)', transition:'color 0.2s' }}>{humidity}%</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
+          <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+        </span>
+        <span style={{ fontSize:11, color:'var(--text-primary)', transition:'color 0.2s' }}>{humidity}%</span>
+      </div>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <span style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
           <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
         </span>
       </div>
-      <div style={{ width:'100%', height:5, background:'var(--accent-dim)', borderRadius:3, overflow:'hidden', marginBottom:2 }}>
-        <div style={{ width:`${humidity}%`, height:'100%', background:col, borderRadius:3, transition:'width 0.3s' }} />
+      <div style={{ fontSize:'0.85rem', fontWeight:700, color:'var(--text-primary)', textAlign:'center', flexShrink:0 }}>{humidity}% HR</div>
+      <div style={{ width:'100%', height:5, background:'var(--accent-dim)', borderRadius:3, overflow:'hidden', flexShrink:0 }}>
+        <div style={{ width:`${humidity}%`, height:'100%', background:'rgba(255,255,255,0.75)', borderRadius:3, transition:'width 0.3s' }} />
       </div>
-      <div style={{ fontSize:9, color:'var(--text-primary)', textAlign:'right', marginBottom:4 }}>{humidity}% HR</div>
-      <div className="w-name" style={{ textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
       {Modal}
     </div>
   );
 
   return (
-    <div className="w-row-body">
-      <span style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
-        <SvgIcon id={icons.default} size={28} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
-      </span>
-      <div className="w-info">
-        <div className="w-name">{name}</div>
-        <div style={{ height:5, background:'var(--accent-dim)', borderRadius:3, overflow:'hidden', marginTop:2 }}>
-          <div style={{ width:`${humidity}%`, height:'100%', background:col, borderRadius:3 }} />
-        </div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
+        <Toggle on={on} onToggle={toggle} />
       </div>
-      <span style={{ fontSize:11, color:'var(--text-primary)', minWidth:30 }}>{humidity}%</span>
-      <Toggle on={on} onToggle={toggle} />
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <span style={{ flexShrink:0, cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
+          <SvgIcon id={icons.default} size={38} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+        </span>
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+        <div style={{ flex:1, height:5, background:'var(--accent-dim)', borderRadius:3, overflow:'hidden' }}>
+          <div style={{ width:`${humidity}%`, height:'100%', background:'rgba(255,255,255,0.75)', borderRadius:3 }} />
+        </div>
+        <span style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)', flexShrink:0 }}>{humidity}%</span>
+      </div>
       {Modal}
     </div>
   );

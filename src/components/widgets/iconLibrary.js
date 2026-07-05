@@ -59,6 +59,9 @@ export const ICONS = {
   'speaker-off':     '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>',
   'music':           '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
   'headphones':      '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+  'film':            '<rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/>',
+  'book':            '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  'note':            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>',
   // ── AUTOMATIZACIÓN ──
   'clock':           '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   'timer':           '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="12" y1="2" x2="12" y2="4"/>',
@@ -73,6 +76,19 @@ export const ICONS = {
   'heart':           '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
   'refresh':         '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
   'info':            '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  // ── ZONAS/HABITACIONES ──
+  'bedroom':         '<rect x="3" y="7" width="18" height="13" rx="1"/><path d="M3 10h18"/><polyline points="6 7 6 3 8 3 8 7"/><polyline points="16 7 16 3 18 3 18 7"/><circle cx="8" cy="15" r="1.5" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1.5" fill="currentColor" stroke="none"/>',
+  'living-room':     '<rect x="3" y="6" width="18" height="14" rx="1"/><rect x="5" y="8" width="5" height="5" rx="0.5"/><rect x="14" y="8" width="5" height="5" rx="0.5"/><rect x="8" y="14" width="8" height="4" rx="0.5"/>',
+  'kitchen':         '<rect x="3" y="5" width="18" height="15" rx="1"/><rect x="6" y="8" width="4" height="5"/><rect x="14" y="8" width="4" height="5"/><line x1="10" y1="13" x2="14" y2="13"/><line x1="10" y1="16" x2="14" y2="16"/>',
+  'bathroom':        '<rect x="4" y="6" width="16" height="14" rx="1"/><circle cx="10" cy="10" r="2.5"/><circle cx="15" cy="10" r="2.5"/><rect x="6" y="14" width="12" height="4" rx="0.5"/>',
+  'office':          '<rect x="3" y="5" width="18" height="15" rx="1"/><rect x="6" y="9" width="5" height="6" rx="0.5"/><rect x="13" y="9" width="5" height="6" rx="0.5"/><rect x="9" y="16" width="6" height="2"/>',
+  'terrace':         '<rect x="3" y="8" width="18" height="12" rx="1"/><line x1="6" y1="8" x2="6" y2="4"/><line x1="12" y1="8" x2="12" y2="4"/><line x1="18" y1="8" x2="18" y2="4"/><line x1="4" y1="5" x2="20" y2="5"/>',
+  'entrance':        '<rect x="4" y="3" width="16" height="18" rx="1"/><rect x="10" y="7" width="4" height="8" rx="0.5"/><circle cx="14" cy="11" r="0.8" fill="currentColor" stroke="none"/>',
+  'garage':          '<rect x="3" y="6" width="18" height="14" rx="1"/><rect x="7" y="10" width="3" height="4" rx="0.5"/><rect x="14" y="10" width="3" height="4" rx="0.5"/><line x1="4" y1="10" x2="20" y2="10"/>',
+  'garden':          '<path d="M5 18h14v2H5z"/><path d="M8 18v-4c0-1 1-2 2-2s2 1 2 2v4"/><path d="M14 18v-3c0-1 1-2 2-2s2 1 2 2v3"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="11" r="1.5"/>',
+  'balcony':         '<rect x="3" y="7" width="18" height="12" rx="1"/><line x1="6" y1="7" x2="6" y2="3"/><line x1="12" y1="7" x2="12" y2="3"/><line x1="18" y1="7" x2="18" y2="3"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="5" y1="11" x2="19" y2="11"/>',
+  'dining':          '<rect x="5" y="8" width="14" height="3" rx="0.5"/><line x1="7" y1="11" x2="7" y2="17"/><line x1="17" y1="11" x2="17" y2="17"/><circle cx="10" cy="13" r="0.7" fill="currentColor" stroke="none"/><circle cx="14" cy="13" r="0.7" fill="currentColor" stroke="none"/>',
+  'laundry':         '<rect x="5" y="6" width="14" height="14" rx="1"/><circle cx="12" cy="13" r="4.5" fill="none"/><circle cx="12" cy="13" r="2.5" fill="none"/>',
 };
 
 export const ICON_CATEGORIES = {
@@ -84,5 +100,6 @@ export const ICON_CATEGORIES = {
   'Energía':     ['plug','plug-off','battery','battery-low','solar','meter','zap'],
   'Multimedia':  ['tv','tv-off','speaker','speaker-off','music','headphones'],
   'Automatización': ['clock','timer','home','star','settings','robot','rule'],
+  'Zonas':       ['bedroom','living-room','kitchen','bathroom','office','terrace','entrance','garage','garden','balcony','dining','laundry'],
   'General':     ['power','check','heart','refresh','info'],
 };

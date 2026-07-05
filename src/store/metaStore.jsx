@@ -8,19 +8,44 @@ function defaultMeta() {
   return {
     dashboards: [{ id: 'db-default', name: 'Dashboard 1' }],
     activeDashboardId: 'db-default',
+    deviceView: 'auto',
+    compactMode: false,
+    compactGrouped: false,
+    viewOriginal: false, // Toggle para ver layout original en lugar del responsivo
+    viewCategorized: false, // Toggle para ver widgets por categoría
+    expandedGroups: {}, // { categoryName: boolean }
   };
 }
 
 function loadMeta() {
   try {
     const raw = localStorage.getItem(META_KEY);
-    if (raw) return JSON.parse(raw);
-    // First launch: migrate legacy data if present
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy) {
-      localStorage.setItem('domotica-dashboard-db-default', legacy);
+    const meta = raw ? JSON.parse(raw) : defaultMeta();
+
+    // Asegurar que expandedGroups existe
+    if (!meta.expandedGroups) {
+      meta.expandedGroups = {};
     }
-    return defaultMeta();
+
+    // Load view preferences from separate storage (device-specific)
+    try {
+      const viewPrefs = JSON.parse(localStorage.getItem('domotica-view-prefs') || '{}');
+      meta.viewOriginal = viewPrefs.viewOriginal || false;
+      meta.viewCategorized = viewPrefs.viewCategorized || false;
+    } catch {
+      meta.viewOriginal = false;
+      meta.viewCategorized = false;
+    }
+
+    if (!raw) {
+      // First launch: migrate legacy data if present
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        localStorage.setItem('domotica-dashboard-db-default', legacy);
+      }
+    }
+
+    return meta;
   } catch {
     return defaultMeta();
   }
@@ -30,6 +55,15 @@ function persistMeta(state) {
   localStorage.setItem(META_KEY, JSON.stringify({
     dashboards: state.dashboards,
     activeDashboardId: state.activeDashboardId,
+    deviceView: state.deviceView,
+    compactMode: state.compactMode,
+    compactGrouped: state.compactGrouped,
+    expandedGroups: state.expandedGroups,
+  }));
+  // View preferences are device-specific, saved separately
+  localStorage.setItem('domotica-view-prefs', JSON.stringify({
+    viewOriginal: state.viewOriginal,
+    viewCategorized: state.viewCategorized,
   }));
 }
 
@@ -38,6 +72,7 @@ function metaReducer(state, action) {
     case 'CREATE_DASHBOARD': {
       const id = `db-${Date.now()}`;
       const next = {
+        ...state,
         dashboards: [...state.dashboards, { id, name: action.name }],
         activeDashboardId: id,
       };
@@ -69,7 +104,7 @@ function metaReducer(state, action) {
       const activeId = state.activeDashboardId === action.id
         ? remaining[0].id
         : state.activeDashboardId;
-      const next = { dashboards: remaining, activeDashboardId: activeId };
+      const next = { ...state, dashboards: remaining, activeDashboardId: activeId };
       persistMeta(next);
       return next;
     }
@@ -78,12 +113,64 @@ function metaReducer(state, action) {
       persistMeta(next);
       return next;
     }
+    case 'SET_DEVICE_VIEW': {
+      const next = { ...state, deviceView: action.deviceView };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_COMPACT_MODE': {
+      const next = { ...state, compactMode: action.compactMode };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_COMPACT_GRID': {
+      const next = { ...state, compactGridCols: action.cols };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_COMPACT_GROUPED': {
+      const next = { ...state, compactGrouped: action.compactGrouped };
+      persistMeta(next);
+      return next;
+    }
+    case 'TOGGLE_GROUP': {
+      const next = {
+        ...state,
+        expandedGroups: {
+          ...state.expandedGroups,
+          [action.category]: !state.expandedGroups[action.category],
+        },
+      };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_VIEW_ORIGINAL': {
+      const next = { ...state, viewOriginal: action.viewOriginal };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_VIEW_CATEGORIZED': {
+      const next = { ...state, viewCategorized: action.viewCategorized };
+      persistMeta(next);
+      return next;
+    }
+    case 'SET_META': {
+      // activeDashboardId, viewOriginal, viewCategorized are per-device — never overwrite from server sync
+      const payload = {
+        ...action.payload,
+        activeDashboardId: state.activeDashboardId,
+        viewOriginal: state.viewOriginal,
+        viewCategorized: state.viewCategorized,
+      };
+      persistMeta(payload);
+      return payload;
+    }
     default:
       return state;
   }
 }
 
-const MetaContext = createContext(null);
+export const MetaContext = createContext(null);
 
 export function MetaProvider({ children }) {
   const [state, dispatch] = useReducer(metaReducer, undefined, loadMeta);

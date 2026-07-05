@@ -57,25 +57,31 @@
   flex: 1;
   overflow: auto;
   z-index: 3;
-  min-height: 0;
-  padding: 60px 20px 20px;
+  min-height: auto;
+  padding: 60px 16px 20px;
+}
+
+.canvas.noHorizontalScroll {
+  overflow-x: hidden;
 }
 
 @media (max-width: 600px) {
   .canvas {
-    padding: 60px 8px 8px;
+    padding: 60px 8px 20px;
+  }
+
+  .canvas.noHorizontalScroll {
+    overflow-x: hidden;
   }
 }
 
 .canvasInner {
   position: relative;
   flex-shrink: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: var(--cell) var(--cell);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 4px 32px rgba(0, 0, 0, 0.40);
+  background: transparent;
+  box-shadow: none;
   border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 /* ── Widgets — glassmorphism ── */
@@ -120,3 +126,4 @@
   pointer-events: none;
   border-radius: 0 0 9px 9px;
 }
+

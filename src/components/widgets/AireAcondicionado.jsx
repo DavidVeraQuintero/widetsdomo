@@ -53,59 +53,63 @@ export default function AireAcondicionado({ size, config, onConfigChange, accent
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
-        <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+    <div className="w-body" style={{ flexDirection:'column', justifyContent:'center', alignItems:'center', gap:4 }}>
+      <span style={{ cursor:'pointer', userSelect:'none', flexShrink:0 }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
+        <SvgIcon id={icons.default} size={40} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
       </span>
-      <span style={{ fontSize:11, fontWeight:700, color:'var(--text-primary)' }}>{temp}°</span>
+      <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', flexShrink:0 }}>{temp}°</span>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
-    <div className="w-body w-center">
-      <div className="w-label">❄ AC</div>
-      <div className="w-val-big" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{temp}°C</div>
-      <div className="w-status" style={{ color:'var(--text-secondary)' }}>{MI[mode]} {mode}</div>
-      <div className="w-btn-row" style={{ justifyContent:'center' }}>
-        <button className="w-btn-icon" onClick={e => { e.stopPropagation(); setTemp(-1); }} onMouseDown={e => e.stopPropagation()}>−</button>
-        <button className="w-btn-icon" onClick={e => { e.stopPropagation(); toggle(); }} onMouseDown={e => e.stopPropagation()} style={{ color: 'var(--text-primary)' }}>⏻</button>
-        <button className="w-btn-icon" onClick={e => { e.stopPropagation(); setTemp(1); }} onMouseDown={e => e.stopPropagation()}>+</button>
+    <div className="w-body">
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4 }}>
+        <div style={{ cursor:'pointer' }} {...longPress}>
+          <SvgIcon id={icons.default} size={40} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+        </div>
+        <span style={{ fontSize:'1.14rem', fontWeight:700, color:'var(--text-primary)', lineHeight:1 }}>{temp}°</span>
+      </div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'center', marginBottom:4, flexShrink:0 }}>{MI[mode]} {mode}</div>
+      <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+        <button className="w-btn w-btn-sm" style={{ flex:1 }} onClick={e => { e.stopPropagation(); setTemp(-1); }} onMouseDown={e => e.stopPropagation()}>−</button>
+        <button className="w-btn w-btn-sm" style={{ flex:1 }} onClick={e => { e.stopPropagation(); setTemp(1); }} onMouseDown={e => e.stopPropagation()}>+</button>
       </div>
       {Modal}
     </div>
   );
 
   if (size === '2x1') return (
-    <div className="w-row-body">
-      <span style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
-        <SvgIcon id={icons.default} size={26} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
-      </span>
-      <div className="w-info">
-        <div className="w-name">{name}</div>
-        <div className="w-status" style={{ color:'var(--text-secondary)' }}>{MI[mode]} {mode}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
+        <Toggle on={on} onToggle={toggle} />
       </div>
-      <div className="w-val-med" style={{ color:'var(--text-primary)' }}>{temp}°C</div>
-      <div className="w-btn-row">
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <span style={{ flexShrink:0, cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
+          <SvgIcon id={icons.default} size={38} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+        </span>
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+        <span style={{ fontSize:12, color:'var(--text-secondary)', flex:1 }}>{MI[mode]} {mode}</span>
+        <span style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)' }}>{temp}°C</span>
         <button className="w-btn-icon" style={{ width:24, height:24, fontSize:12 }} onClick={e => { e.stopPropagation(); setTemp(-1); }} onMouseDown={e => e.stopPropagation()}>−</button>
         <button className="w-btn-icon" style={{ width:24, height:24, fontSize:12 }} onClick={e => { e.stopPropagation(); setTemp(1); }} onMouseDown={e => e.stopPropagation()}>+</button>
       </div>
-      <Toggle on={on} onToggle={toggle} />
       {Modal}
     </div>
   );
 
   if (size === '2x2') return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">❄ Aire Acondicionado</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
-      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4 }}>
-        <div className="w-val-big" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{temp}°C</div>
-        <div className="w-status" style={{ color:'var(--text-secondary)' }}>{MI[mode]} {mode}</div>
-        <div className="w-name">{name}</div>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
+        <SvgIcon id={icons.default} size={48} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} style={{ cursor:'pointer' }} {...longPress} />
+        <div className="w-val-big" style={{ color:'var(--text-primary)' }}>{temp}°C</div>
+        <div className="w-status" style={{ color:'var(--text-secondary)', fontSize:12 }}>{MI[mode]} {mode}</div>
       </div>
       <div className="w-btn-row" style={{ justifyContent:'center' }}>
         <button className="w-btn-icon" onClick={e => { e.stopPropagation(); setTemp(-1); }} onMouseDown={e => e.stopPropagation()}>−</button>
@@ -115,26 +119,5 @@ export default function AireAcondicionado({ size, config, onConfigChange, accent
     </div>
   );
 
-  return (
-    <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">❄ Aire Acondicionado</div>
-        <Toggle on={on} onToggle={toggle} />
-      </div>
-      <div className="w-row">
-        <div><div className="w-name">{name}</div><div className="w-status" style={{ color:'var(--text-secondary)' }}>{MI[mode]} {mode}</div></div>
-        <div className="w-val-big" style={{ color:'var(--text-primary)', cursor:'pointer' }} {...longPress}>{temp}°C</div>
-        <div className="w-btn-row">
-          <button className="w-btn-icon" onClick={e => { e.stopPropagation(); setTemp(-1); }} onMouseDown={e => e.stopPropagation()}>−</button>
-          <button className="w-btn-icon" onClick={e => { e.stopPropagation(); setTemp(1); }} onMouseDown={e => e.stopPropagation()}>+</button>
-        </div>
-      </div>
-      <div className="w-btn-row">
-        {MODES.map(m => (
-          <button key={m} className="w-btn w-btn-sm" style={mode === m ? { background:'var(--border-accent)', color:'white' } : {}} onClick={e => { e.stopPropagation(); onConfigChange({ ...config, mode: m }); }} onMouseDown={e => e.stopPropagation()}>{MI[m]} {m}</button>
-        ))}
-      </div>
-      {Modal}
-    </div>
-  );
+  return null;
 }

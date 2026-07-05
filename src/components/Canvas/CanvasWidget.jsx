@@ -1,7 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useDashboard } from '../../store/dashboardStore.jsx';
 import { getCatalogEntry } from '../../catalog/widgetCatalog.jsx';
-import { WIDGET_SIZES, SNAP_SIZE, CELL_SIZE } from '../../catalog/widgetSizes';
+import { WIDGET_SIZES, SNAP_SIZE } from '../../catalog/widgetSizes';
 import { computeGroupSize, HEADER_HEIGHT } from '../widgets/grupoUtils';
 import styles from './Canvas.module.css';
 
@@ -53,22 +53,23 @@ function computeOnCardStyle(rgbStyle) {
 }
 
 function isOn(config) {
-  return !!(config.on || config.armed || config.recording);
+  return !!(config.on || config.active || config.activeScene || config.armed || config.recording);
 }
 
-export default function CanvasWidget({ widget, zoom = 1 }) {
+function isModalOpen() {
+  return document.querySelector('[style*="z-index: 9000"]') !== null ||
+         document.querySelector('[role="dialog"]') !== null;
+}
+
+export default function CanvasWidget({ widget, zoom = 1, compactMode = false, responsiveScale = 1, isResponsive = false }) {
   const { state, dispatch } = useDashboard();
-  const dragging = useRef(false);
-  const origin = useRef(null);
+  const nodeRef = useRef(null);
+  const dragRef = useRef({ isDragging: false, startX: 0, startY: 0, origX: 0, origY: 0 });
   const isSelected = state.selectedId === widget.id;
 
   const isGrupo = widget.type === 'grupo';
   const size = isGrupo ? { width: undefined, height: undefined } : (WIDGET_SIZES[widget.size] || WIDGET_SIZES['2x2']);
 
-  // Tamaño efectivo para clamping de arrastre
-  const effectiveSize = isGrupo
-    ? (() => { const gs = computeGroupSize(widget.config.children || []); return { width: gs.width, height: gs.height + HEADER_HEIGHT }; })()
-    : size;
   const def = getCatalogEntry(widget.type);
   const WidgetComponent = def?.component;
 
@@ -81,105 +82,84 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
       ? computeOnCardStyle(state.theme.rgbStyle)
       : {};
 
-  const startDrag = (clientX, clientY, isTouch = false) => {
-    if (isTouch && !clientX) return;
-    if (document.querySelector('input, button, select, textarea')) return;
+  const modalOpen = isModalOpen();
 
-    dispatch({ type: 'SELECT_WIDGET', id: widget.id });
+  useEffect(() => {
+    const el = nodeRef.current;
+    if (!el || compactMode || isResponsive) return;
 
-    dragging.current = true;
-    origin.current = {
-      mx: clientX, my: clientY,
-      wx: widget.x,  wy: widget.y,
-    };
-
-    const snap = (v) =>
-      state.snapToGrid ? Math.round(v / SNAP_SIZE) * SNAP_SIZE : v;
-
-    const canvasW = state.grid.cols * CELL_SIZE;
-    const canvasH = state.grid.rows * CELL_SIZE;
-    const maxX = Math.max(0, canvasW - effectiveSize.width);
-    const maxY = Math.max(0, canvasH - effectiveSize.height);
-
-    const clamp = (nx, ny) => [
-      snap(Math.max(0, Math.min(maxX, nx))),
-      snap(Math.max(0, Math.min(maxY, ny))),
-    ];
-
-    const onMove = (e) => {
-      if (!dragging.current) return;
-      const x = isTouch && e.touches ? e.touches[0].clientX : e.clientX;
-      const y = isTouch && e.touches ? e.touches[0].clientY : e.clientY;
-      const [nx, ny] = clamp(
-        origin.current.wx + (x - origin.current.mx) / zoom,
-        origin.current.wy + (y - origin.current.my) / zoom,
-      );
-      dispatch({ type: 'MOVE_WIDGET', id: widget.id, x: nx, y: ny });
-    };
-
-    const onUp = (ev) => {
-      dragging.current = false;
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchend', onUp);
-
-      if (widget.type !== 'grupo') {
-        const finalClientX = isTouch && ev.changedTouches ? ev.changedTouches[0].clientX : ev.clientX;
-        const finalClientY = isTouch && ev.changedTouches ? ev.changedTouches[0].clientY : ev.clientY;
-        const [finalX, finalY] = clamp(
-          origin.current.wx + (finalClientX - origin.current.mx) / zoom,
-          origin.current.wy + (finalClientY - origin.current.my) / zoom,
-        );
-        const s  = WIDGET_SIZES[widget.size] || WIDGET_SIZES['2x2'];
-        const cx = finalX + s.width  / 2;
-        const cy = finalY + s.height / 2;
-
-        const targetGroup = state.widgets.find(w => {
-          if (w.type !== 'grupo' || w.id === widget.id) return false;
-          const gs = computeGroupSize(w.config.children || []);
-          return cx >= w.x && cx <= w.x + gs.width &&
-                 cy >= w.y + HEADER_HEIGHT && cy <= w.y + HEADER_HEIGHT + gs.height;
-        });
-
-        if (targetGroup) {
-          dispatch({
-            type: 'MOVE_TO_GROUP',
-            widgetId: widget.id,
-            groupId:  targetGroup.id,
-            x: Math.max(0, finalX - targetGroup.x),
-            y: Math.max(0, finalY - targetGroup.y - HEADER_HEIGHT),
-          });
-        }
+    const handlePointerDown = (e) => {
+      // Para grupos, solo arrastrar desde el header
+      if (isGrupo && !e.target.closest('[data-grupo-header]')) return;
+      dispatch({ type: 'SELECT_WIDGET', id: widget.id });
+      if (!isModalOpen()) {
+        dragRef.current = {
+          isDragging: true,
+          startX: e.clientX,
+          startY: e.clientY,
+          origX: widget.x,
+          origY: widget.y,
+        };
+        e.preventDefault();
       }
     };
 
-    if (isTouch) {
-      document.addEventListener('touchmove', onMove, { passive: false });
-      document.addEventListener('touchend', onUp);
-    } else {
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    }
-  };
+    const handlePointerMove = (e) => {
+      if (!dragRef.current.isDragging) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      dispatch({
+        type: 'MOVE_WIDGET',
+        id: widget.id,
+        x: dragRef.current.origX + dx / zoom,
+        y: dragRef.current.origY + dy / zoom,
+      });
+    };
 
-  const handleMouseDown = (e) => {
-    if (e.target.closest('input, button, select, textarea')) return;
-    e.stopPropagation();
-    e.preventDefault();
-    startDrag(e.clientX, e.clientY, false);
-  };
+    const handlePointerUp = (e) => {
+      if (dragRef.current.isDragging && !isGrupo) {
+        const movedEnough =
+          Math.abs(e.clientX - dragRef.current.startX) > 8 ||
+          Math.abs(e.clientY - dragRef.current.startY) > 8;
 
-  const handleTouchStart = (e) => {
-    if (e.target.closest('input, button, select, textarea')) return;
-    if (e.touches.length !== 1) return;
-    e.stopPropagation();
-    const touch = e.touches[0];
-    startDrag(touch.clientX, touch.clientY, true);
-  };
+        if (movedEnough) {
+          // Buscar si se soltó encima de un grupo
+          const elements = document.elementsFromPoint(e.clientX, e.clientY);
+          const groupEl = elements.find(
+            el => el.dataset?.widgetType === 'grupo' && el.dataset?.widgetId !== widget.id
+          );
+          if (groupEl) {
+            const groupId = groupEl.dataset.widgetId;
+            const contentEl = groupEl.querySelector('[data-grupo-content]');
+            if (contentEl) {
+              const rect = contentEl.getBoundingClientRect();
+              const snap = (v) => Math.round(v / SNAP_SIZE) * SNAP_SIZE;
+              const x = snap(Math.max(0, e.clientX - rect.left));
+              const y = snap(Math.max(0, e.clientY - rect.top));
+              dispatch({ type: 'MOVE_TO_GROUP', widgetId: widget.id, groupId, x, y });
+              dragRef.current.isDragging = false;
+              return;
+            }
+          }
+        }
+      }
+      dragRef.current.isDragging = false;
+    };
+
+    el.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      el.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [widget.x, widget.y, widget.id, zoom, dispatch, compactMode, isResponsive]);
 
   return (
     <div
+      ref={nodeRef}
       className={`${styles.widget} ${isSelected ? styles.selected : ''}`}
       data-widget-id={widget.id}
       data-widget-type={widget.type}
@@ -188,15 +168,31 @@ export default function CanvasWidget({ widget, zoom = 1 }) {
         top: widget.y,
         ...(isGrupo ? {} : { width: size.width, height: size.height }),
         ...rgbCardStyle,
+        cursor: isResponsive || modalOpen ? 'not-allowed' : (compactMode ? 'default' : (isGrupo ? 'default' : 'grab')),
+        opacity: isResponsive ? 0.75 : (compactMode ? 0.85 : 1),
+        transform: responsiveScale !== 1 ? `scale(${responsiveScale})` : undefined,
+        transformOrigin: 'top left',
+        touchAction: (isResponsive || modalOpen) ? 'auto' : 'none',
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
+      onTouchStart={(e) => {
+        dispatch({ type: 'SELECT_WIDGET', id: widget.id });
+        if (!compactMode && !isResponsive && !isModalOpen()) {
+          dragRef.current = {
+            isDragging: true,
+            startX: e.touches[0].clientX,
+            startY: e.touches[0].clientY,
+            origX: widget.x,
+            origY: widget.y,
+          };
+        }
+      }}
     >
       {WidgetComponent ? (
         <WidgetComponent
           size={widget.size}
           config={widget.config}
           accentColor="rgba(255,255,255,0.85)"
+          widgetId={widget.id}
           onConfigChange={(config) =>
             dispatch({ type: 'UPDATE_CONFIG', id: widget.id, config })
           }

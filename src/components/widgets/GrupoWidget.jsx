@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useDrop } from 'react-dnd';
 import { getCatalogEntry } from '../../catalog/widgetCatalog.jsx';
 import { WIDGET_SIZES, SNAP_SIZE } from '../../catalog/widgetSizes';
 import { useDashboard } from '../../store/dashboardStore.jsx';
@@ -72,30 +73,32 @@ function ChildWrapper({ child, accentColor, onConfigChange, onMove }) {
   const rgbColor  = isRgb ? getChildRgbColor(child.type, child.config) : null;
   const isOn      = !isRgb && childIsOn(child.config);
 
-  const handleMouseDown = (e) => {
+  const handlePointerDown = (e) => {
     if (e.target.closest('input, button, select, textarea')) return;
+    // Detiene la propagación en pointer events para que CanvasWidget no mueva el grupo
     e.stopPropagation();
+    e.preventDefault();
     dispatch({ type: 'SELECT_WIDGET', id: child.id });
     dragging.current = true;
     origin.current = { mx: e.clientX, my: e.clientY, wx: child.x, wy: child.y };
 
     const snap = (v) => Math.round(v / SNAP_SIZE) * SNAP_SIZE;
 
-    const onMouseMove = (ev) => {
+    const onPointerMove = (ev) => {
       if (!dragging.current) return;
       const nx = snap(Math.max(0, origin.current.wx + (ev.clientX - origin.current.mx)));
       const ny = snap(Math.max(0, origin.current.wy + (ev.clientY - origin.current.my)));
       onMove(nx, ny);
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = () => {
       dragging.current = false;
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
   };
 
   return (
@@ -104,12 +107,12 @@ function ChildWrapper({ child, accentColor, onConfigChange, onMove }) {
         position: 'absolute',
         left: child.x, top: child.y,
         width: childSize.width, height: childSize.height,
-        borderRadius: 10, overflow: 'hidden',
+        borderRadius: '0.71rem', overflow: 'hidden',
         cursor: 'grab', userSelect: 'none',
+        touchAction: 'none',
         ...cardStyle,
       }}
-      onMouseDown={handleMouseDown}
-      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+      onPointerDown={handlePointerDown}
     >
       {WidgetComponent && (
         <WidgetComponent
@@ -137,13 +140,16 @@ function ChildWrapper({ child, accentColor, onConfigChange, onMove }) {
   );
 }
 
-export default function GrupoWidget({ config, onConfigChange, accentColor }) {
+export default function GrupoWidget({ config, onConfigChange, accentColor, widgetId }) {
   const { name = 'Grupo', icon = 'home', children = [] } = config;
   const [modal, setModal] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const longPressTimer = useRef(null);
   const nameInputRef = useRef(null);
+  const groupCanvasRef = useRef(null);
+  // Ref para evitar closure obsoleto en el handler de drop
+  const dropStateRef = useRef({ children, patchChildren: null });
 
   const { width, height } = computeGroupSize(children);
   const showToggle = hasControllable(children);
@@ -154,6 +160,39 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
 
   const patch = (p) => onConfigChange({ ...config, ...p });
   const patchChildren = (newChildren) => patch({ children: newChildren });
+
+  // Mantener ref actualizado para el drop handler (evita closure obsoleto)
+  dropStateRef.current = { children, patchChildren };
+
+  const [, dropGroup] = useDrop(() => ({
+    accept: 'WIDGET',
+    drop: (item, monitor) => {
+      if (monitor.didDrop()) return;
+      const offset = monitor.getClientOffset();
+      if (!offset || !groupCanvasRef.current) return;
+
+      const rect = groupCanvasRef.current.getBoundingClientRect();
+      const def = getCatalogEntry(item.widgetType);
+      if (!def) return;
+
+      const snap = (v) => Math.round(v / SNAP_SIZE) * SNAP_SIZE;
+      const x = snap(Math.max(0, offset.x - rect.left));
+      const y = snap(Math.max(0, offset.y - rect.top));
+
+      const newChild = {
+        id: `${item.widgetType}-${Date.now()}`,
+        type: item.widgetType,
+        x,
+        y,
+        size: def.sizes[Math.min(1, def.sizes.length - 1)],
+        config: { ...def.defaultConfig },
+      };
+
+      const { children: cur, patchChildren: curPatch } = dropStateRef.current;
+      curPatch([...cur, newChild]);
+      return { dropped: true };
+    },
+  }));
 
   const startEditName = (e) => {
     e.stopPropagation();
@@ -193,22 +232,24 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
 
   return (
     <div style={{ width, display: 'inline-flex', flexDirection: 'column' }}>
-      {/* ── Header ── long-press abre modal, clic en icono abre picker inline en modal */}
+      {/* ── Header ── es la única zona desde donde se puede arrastrar el grupo */}
       <div
+        data-grupo-header="true"
         style={{
           height: HEADER_HEIGHT,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 10px',
+          padding: '0 0.71rem',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           flexShrink: 0,
+          cursor: 'grab',
         }}
         onMouseDown={startHeaderLongPress}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
           {/* Icono — muestra el icono SVG, clic abre modal */}
           <div
             style={{
-              width: 22, height: 22, borderRadius: 5, flexShrink: 0,
+              width: '1.57rem', height: '1.57rem', borderRadius: '0.35rem', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(255,255,255,0.12)',
               cursor: 'pointer',
@@ -232,13 +273,13 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
               onMouseDown={e => e.stopPropagation()}
               style={{
                 background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.35)',
-                borderRadius: 4, color: 'white', fontSize: 12, fontWeight: 700,
-                padding: '1px 5px', outline: 'none', width: 90, flexShrink: 0,
+                borderRadius: '0.28rem', color: 'white', fontSize: '0.85rem', fontWeight: 700,
+                padding: '0.07rem 0.35rem', outline: 'none', width: '6.4rem', flexShrink: 0,
               }}
             />
           ) : (
             <span
-              style={{ color: 'white', fontSize: 13, fontWeight: 700, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              style={{ color: 'white', fontSize: '0.92rem', fontWeight: 700, cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               onMouseDown={e => e.stopPropagation()}
               onDoubleClick={startEditName}
               title="Doble clic para editar nombre"
@@ -246,9 +287,9 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
           )}
 
           <span style={{
-            fontSize: 8, color: 'rgba(255,255,255,0.55)',
-            border: '1px solid rgba(255,255,255,0.25)', borderRadius: 4,
-            padding: '1px 5px', letterSpacing: 0.5, flexShrink: 0,
+            fontSize: '0.57rem', color: 'rgba(255,255,255,0.55)',
+            border: '1px solid rgba(255,255,255,0.25)', borderRadius: '0.28rem',
+            padding: '0.07rem 0.35rem', letterSpacing: 0.5, flexShrink: 0,
           }}>GRUPO</span>
         </div>
 
@@ -264,7 +305,7 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
                 background: allOff ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)',
                 border: allOff ? '1px solid rgba(255,255,255,0.60)' : '1px solid rgba(255,255,255,0.18)',
                 color: allOff ? 'white' : 'rgba(255,255,255,0.42)',
-                borderRadius: 5, fontSize: 9, padding: '3px 7px',
+                borderRadius: '0.35rem', fontSize: 12, padding: '0.21rem 0.5rem',
                 cursor: 'pointer', letterSpacing: 0.5, transition: 'background 0.15s, border-color 0.15s, color 0.15s',
               }}
             >OFF</button>
@@ -275,7 +316,7 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
                 background: allOn ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.05)',
                 border: allOn ? '1px solid rgba(255,255,255,0.60)' : '1px solid rgba(255,255,255,0.18)',
                 color: allOn ? 'white' : 'rgba(255,255,255,0.42)',
-                borderRadius: 5, fontSize: 9, padding: '3px 7px',
+                borderRadius: '0.35rem', fontSize: 12, padding: '0.21rem 0.5rem',
                 cursor: 'pointer', letterSpacing: 0.5, transition: 'background 0.15s, border-color 0.15s, color 0.15s',
               }}
             >ON</button>
@@ -286,17 +327,17 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
       {/* ── Canvas interno ── */}
       <div
         data-grupo-content="true"
+        ref={(el) => { dropGroup(el); groupCanvasRef.current = el; }}
         style={{ position: 'relative', width, height, flexShrink: 0 }}
         onMouseDown={startBgLongPress}
         onMouseUp={clearLongPress}
         onMouseLeave={clearLongPress}
-        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
       >
         {children.length === 0 && (
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,255,255,0.25)', fontSize: 11, gap: 5,
+            color: 'rgba(255,255,255,0.25)', fontSize: 12, gap: 5,
             pointerEvents: 'none',
           }}>
             <span>⊕</span><span>Arrastra widgets aquí</span>
@@ -318,6 +359,7 @@ export default function GrupoWidget({ config, onConfigChange, accentColor }) {
           config={config}
           onConfigChange={onConfigChange}
           onClose={() => setModal(false)}
+          groupId={widgetId}
         />
       )}
     </div>

@@ -10,9 +10,9 @@
 }
 
 .label {
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  color: #475569;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 8px;
 }
 
@@ -30,8 +30,8 @@
   padding: 6px 4px;
   text-align: center;
   cursor: pointer;
-  font-size: 9px;
-  color: #94a3b8;
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
   transition: all 0.15s;
   display: flex;
   flex-direction: column;
@@ -73,11 +73,11 @@
   padding: 6px 4px;
   border-radius: 6px;
   text-align: center;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.4;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  color: #94a3b8;
+  color: rgba(255,255,255,0.75);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -118,10 +118,10 @@
 /* Add button */
 .addBtn {
   border-style: dashed;
-  color: #475569;
-  font-size: 9px;
+  color: rgba(255, 255, 255, 0.50);
+  font-size: 12px;
 }
-.addBtn:hover { color: #94a3b8; }
+.addBtn:hover { color: white; }
 
 /* Grid size stepper */
 .gridRow {
@@ -137,8 +137,8 @@
 }
 
 .gridFieldLabel {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.40);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .stepper {
@@ -197,7 +197,7 @@
   color: rgba(255, 255, 255, 0.65);
   border-radius: 6px;
   padding: 6px 4px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -215,7 +215,7 @@
   color: rgba(255, 255, 255, 0.65);
   border-radius: 6px;
   padding: 6px 4px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -233,7 +233,7 @@
   color: rgba(255, 255, 255, 0.65);
   border-radius: 6px;
   padding: 6px;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }

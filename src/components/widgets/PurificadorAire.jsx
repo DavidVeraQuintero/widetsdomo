@@ -47,47 +47,57 @@ export default function PurificadorAire({ size, config, onConfigChange, accentCo
     <PurificadorModal on={on} aqi={aqi} name={name} config={config} onConfigChange={patchConfig} onClose={() => setModal(false)} />
   );
 
+  if (size === '1x1') return (
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
+        <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+      </span>
+      <div style={{ fontSize:'0.78rem', color:'var(--text-secondary)', marginTop:2, flexShrink:0 }}>AQI {aqi}</div>
+      {Modal}
+    </div>
+  );
+
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <span style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
           <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
         </span>
       </div>
-      <div style={{ fontSize:9, color:aqiCol, textAlign:'center', marginBottom:4 }}>AQI {aqi} · {AQI_LABEL(aqi)}</div>
-      <div className="w-name" style={{ textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
+      <div className="w-sub" style={{ textAlign:'center', flexShrink:0 }}>AQI {aqi} · {AQI_LABEL(aqi)}</div>
       {Modal}
     </div>
   );
 
   if (size === '2x1') return (
-    <div className="w-row-body">
-      <span style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
-        <SvgIcon id={icons.default} size={26} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
-      </span>
-      <div className="w-info">
-        <div className="w-name">{name}</div>
-        <div className="w-status" style={{ color:aqiCol }}>AQI {aqi} · {AQI_LABEL(aqi)}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
+        <Toggle on={on} onToggle={toggle} />
       </div>
-      <Toggle on={on} onToggle={toggle} />
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <span style={{ flexShrink:0, cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
+          <SvgIcon id={icons.default} size={38} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
+        </span>
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
+      <div className="w-sub">AQI {aqi} · {AQI_LABEL(aqi)}</div>
       {Modal}
     </div>
   );
 
   return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">🌬 Purificador</div>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4 }}>
         <div style={{ cursor:'pointer', display:'flex', alignItems:'center' }} {...longPress}>
           <SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} />
         </div>
-        <div className="w-name">{name}</div>
-        <div className="w-val-med" style={{ color:aqiCol }}>AQI {aqi}</div>
-        <div className="w-sub" style={{ color:aqiCol }}>{AQI_LABEL(aqi)}</div>
+        <div className="w-val-med" style={{ color:'var(--text-primary)' }}>AQI {aqi}</div>
+        <div className="w-sub">{AQI_LABEL(aqi)}</div>
       </div>
       {Modal}
     </div>

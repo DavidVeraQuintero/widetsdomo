@@ -3,6 +3,7 @@ import Toggle from './Toggle';
 import { useLongPress, ModalBase, IconSection } from './widgetUtils';
 import SvgIcon from './SvgIcon';
 import { useWidgetIcons } from './useWidgetIcons';
+import { useDeviceControl } from '../../hooks/useDeviceControl';
 
 function EnchufeModal({ config, onConfigChange, onClose }) {
   const { on = false, watts = 85, name = 'Enchufe' } = config;
@@ -22,9 +23,9 @@ function EnchufeModal({ config, onConfigChange, onClose }) {
       <div style={{ textAlign:'center', marginTop:10 }}>
         {on
           ? <div style={{ fontSize:28, fontWeight:700, color:'var(--text-primary)' }}>{watts}W</div>
-          : <div style={{ fontSize:11, color:'var(--text-dim)' }}>○ Apagado</div>
+          : <div style={{ fontSize:12, color:'var(--text-dim)' }}>○ Apagado</div>
         }
-        {on && <div style={{ fontSize:10, color:'var(--text-secondary)', marginTop:4 }}>consumiendo ahora</div>}
+        {on && <div style={{ fontSize:12, color:'var(--text-secondary)', marginTop:4 }}>consumiendo ahora</div>}
       </div>
       <IconSection typeId="enchufe" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
     </ModalBase>
@@ -34,60 +35,67 @@ function EnchufeModal({ config, onConfigChange, onClose }) {
 export default function Enchufe({ size, config, onConfigChange, accentColor }) {
   const { on = false, watts = 85, name = 'Enchufe' } = config;
   const [modal, setModal] = useState(false);
-  const toggle = () => onConfigChange({ ...config, on: !on });
-  const patchConfig = (p) => onConfigChange({ ...config, ...p });
+  const sendCmd = useDeviceControl(config);
+
+  const handleConfigChange = (newConfig) => {
+    if (newConfig.on !== config.on) sendCmd(newConfig.on ? 'on' : 'off');
+    onConfigChange(newConfig);
+  };
+
+  const toggle = () => handleConfigChange({ ...config, on: !on });
   const col = on ? '#22c55e' : 'var(--text-dim)';
   const longPress = useLongPress(() => setModal(true));
   const icons = useWidgetIcons('enchufe', config.icons);
 
   const Modal = modal && (
-    <EnchufeModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />
+    <EnchufeModal config={config} onConfigChange={handleConfigChange} onClose={() => setModal(false)} />
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}><SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
+    <div className="w-body" style={{ alignItems:'center' }}>
+      <div className="w-name" style={{ width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
+      <span style={{ marginTop:'auto', cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}><SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={44} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
       </div>
-      <div style={{ fontSize:9, color:'var(--text-primary)', textAlign:'right', marginBottom:2 }}>{on ? `${watts}W` : '○ off'}</div>
+      {on && <div style={{ fontSize:12, color:'var(--text-primary)', textAlign:'right', marginBottom:2 }}>{watts}W</div>}
       <div className="w-name" style={{ textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
       {Modal}
     </div>
   );
 
   if (size === '2x1') return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'10px 12px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ flexShrink:0, cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={20} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
-        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
-      <div style={{ fontSize:11, color:'var(--text-primary)' }}>{on ? `● ${watts}W consumiendo` : '○ Apagado'}</div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <span style={{ flexShrink:0, cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={38} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
+      {on && <div style={{ fontSize:12, color:'var(--text-primary)' }}>● {watts}W consumiendo</div>}
       {Modal}
     </div>
   );
 
   return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={52} color={on ? 'var(--icon-on)' : 'var(--icon-off)'} className={on ? 'icon-glow' : ''} /></span>
       </div>
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
-        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0, flex:1 }}>{name}</div>
-        <span style={{ fontSize:18, fontWeight:700, color:'var(--text-primary)', flexShrink:0 }}>{on ? `${watts}W` : '—'}</span>
-      </div>
+      <span style={{ fontSize:18, fontWeight:700, color:'var(--text-primary)', textAlign:'right' }}>{on ? `${watts}W` : '—'}</span>
+      {Modal}
     </div>
   );
 }

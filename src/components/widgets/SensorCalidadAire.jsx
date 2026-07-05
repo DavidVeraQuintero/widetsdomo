@@ -26,12 +26,12 @@ function CalidadAireModal({ aqi, co2, name, config, onConfigChange, onClose, acc
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderTop:'1px solid var(--border)' }}>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4 }}>CO₂</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', marginBottom:4 }}>CO₂</div>
           <div style={{ fontSize:18, fontWeight:600, color:'var(--text-primary)' }}>{co2}</div>
-          <div style={{ fontSize:9, color:'var(--text-secondary)' }}>ppm</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)' }}>ppm</div>
         </div>
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:10, color:'var(--text-secondary)', marginBottom:4 }}>Estado</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', marginBottom:4 }}>Estado</div>
           <div style={{ fontSize:13, color:'var(--text-secondary)' }}>● {AQI_LABEL(aqi)}</div>
         </div>
       </div>
@@ -54,7 +54,6 @@ export default function SensorCalidadAire({ size, config, onConfigChange, accent
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">💨 Calidad Aire</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={44} color="var(--icon-on)" className="icon-glow" /></span>
       <div className="w-val-big" style={{ color:'var(--text-primary)' }}>AQI {aqi}</div>
       <div className="w-status" style={{ color:'var(--text-secondary)' }}>{AQI_LABEL(aqi)}</div>
@@ -65,14 +64,14 @@ export default function SensorCalidadAire({ size, config, onConfigChange, accent
 
   if (size === '2x1') return (
     <div className="w-row-body">
-      <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={26} color="var(--icon-on)" className="icon-glow" /></span>
+      <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={32} color="var(--icon-on)" className="icon-glow" /></span>
       <div className="w-info">
         <div className="w-name">{name}</div>
         <div className="w-status" style={{ color:'var(--text-secondary)' }}>{AQI_LABEL(aqi)}</div>
       </div>
       <div style={{ textAlign:'right' }}>
         <div style={{ fontSize:18, fontWeight:700, color:'var(--text-primary)' }}>AQI {aqi}</div>
-        <div style={{ fontSize:9, color:'var(--text-secondary)' }}>CO₂: {co2}</div>
+        <div style={{ fontSize:12, color:'var(--text-secondary)' }}>CO₂: {co2}</div>
       </div>
       {Modal}
     </div>
@@ -80,7 +79,6 @@ export default function SensorCalidadAire({ size, config, onConfigChange, accent
 
   return (
     <div className="w-body w-center">
-      <div className="w-label">💨 Calidad del Aire</div>
       <div className="w-name">{name}</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={icons.default} size={48} color="var(--icon-on)" className="icon-glow" /></span>
       <div className="w-val-big" style={{ color:'var(--text-primary)' }}>AQI {aqi}</div>
