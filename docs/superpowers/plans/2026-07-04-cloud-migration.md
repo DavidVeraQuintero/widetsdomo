@@ -311,7 +311,7 @@ export function verifyWsRequest(req) {
 Run this once to get the hash (you'll put it in the environment variable `ADMIN_PASSWORD_HASH`):
 
 ```bash
-node -e "import('bcryptjs').then(m => m.default.hash('AdMin0312', 12).then(console.log))"
+node -e "import('bcryptjs').then(m => m.default.hash('TU_CONTRASEÑA', 12).then(console.log))"
 ```
 
 Copy the output (a string starting with `$2a$12$...`) — it goes into the `ADMIN_PASSWORD_HASH` env var on Render and in your local `.env`.
@@ -869,7 +869,7 @@ node --env-file=.env server/index.js &
 npm run dev
 ```
 
-Open `http://localhost:5173` — should redirect to Login (since `/api/me` returns 401). Enter admin / AdMin0312 — should load the dashboard.
+Open `http://localhost:5173` — should redirect to Login (since `/api/me` returns 401). Enter admin / your configured password — should load the dashboard.
 
 - [ ] **Step 4: Commit**
 

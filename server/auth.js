@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-const SECRET      = process.env.JWT_SECRET || 'change-me-in-production';
+const SECRET = process.env.JWT_SECRET;
+if (!SECRET) throw new Error('JWT_SECRET env var is required');
 const ADMIN_USER  = process.env.ADMIN_USER || 'admin';
 const ADMIN_HASH  = process.env.ADMIN_PASSWORD_HASH || '';
 const COOKIE_NAME = 'session';

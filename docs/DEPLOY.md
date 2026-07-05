@@ -15,9 +15,9 @@
 
 Ejecutar en terminal (dentro de `C:\widetsdomo`):
 
-**Hash de contraseña** (para `AdMin0312`):
+**Hash de contraseña** (reemplaza `TU_CONTRASEÑA` con la tuya):
 ```bash
-node -e "import('bcryptjs').then(b=>b.default.hash('AdMin0312',12).then(console.log))"
+node -e "import('bcryptjs').then(b=>b.default.hash('TU_CONTRASEÑA',12).then(console.log))"
 ```
 
 **JWT Secret** (64 bytes aleatorios):
@@ -71,7 +71,7 @@ En la app **Maker API** dentro de Hubitat:
 
 Abrir `https://widetsdomo.onrender.com` en el navegador:
 - **Usuario:** `admin`
-- **Contraseña:** `AdMin0312`
+- **Contraseña:** la que configuraste en el paso 2
 
 ---
 
