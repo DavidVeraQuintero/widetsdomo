@@ -113,8 +113,8 @@ function AppContent({ onLogout }) {
           <div className={styles.stripBottom}>
             {/* Connection chip */}
             {mode !== 'offline' && (
-              <div className={styles.connChip} title={mode === 'online' ? 'Conectado a la nube' : 'Modo local (LAN)'}>
-                <span className={`${styles.connDot} ${mode === 'online' ? styles.connDotGreen : styles.connDotAmber}`} />
+              <div className={styles.connChip} title={mode === 'local' ? 'Modo local (LAN directo)' : 'Conectado a la nube'}>
+                <span className={`${styles.connDot} ${mode === 'local' ? styles.connDotGreen : styles.connDotAmber}`} />
               </div>
             )}
             {/* Account / logout */}
@@ -180,24 +180,43 @@ function AppInner({ onLogout }) {
   );
 }
 
+const SESSION_KEY = 'domotica_session_expiry';
+
 export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
     fetch('/api/me')
-      .then(r => { if (r.ok) setAuthenticated(true); })
-      .catch(() => {})
+      .then(r => {
+        if (r.ok) {
+          setAuthenticated(true);
+        } else {
+          // 401 — real auth failure, clear cached session
+          localStorage.removeItem(SESSION_KEY);
+        }
+      })
+      .catch(() => {
+        // Network error (Render unreachable) — trust local session if not expired
+        const expiry = parseInt(localStorage.getItem(SESSION_KEY) || '0');
+        if (expiry > Date.now()) setAuthenticated(true);
+      })
       .finally(() => setAuthChecked(true));
   }, []);
 
+  const handleAuth = () => {
+    localStorage.setItem(SESSION_KEY, String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+    setAuthenticated(true);
+  };
+
   const handleLogout = async () => {
+    localStorage.removeItem(SESSION_KEY);
     await fetch('/api/logout', { method: 'POST' }).catch(() => {});
     setAuthenticated(false);
   };
 
   if (!authChecked) return null;
-  if (!authenticated) return <Login onAuth={() => setAuthenticated(true)} />;
+  if (!authenticated) return <Login onAuth={handleAuth} />;
 
   return (
     <MetaProvider>

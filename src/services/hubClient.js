@@ -1,13 +1,14 @@
 import { HUBITAT_CAP_TO_WIDGETS, HA_DOMAIN_TO_WIDGETS } from './hubMappings.js';
 
-const SHORT_TIMEOUT_MS = 2000;
+const LOCAL_TIMEOUT_MS = 1000;
 const PROXY_TIMEOUT_MS = 8000;
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = PROXY_TIMEOUT_MS) {
+async function fetchDirectLocal(hub, path, method = 'GET') {
+  const url = `https://${hub.ip}${path}`;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), LOCAL_TIMEOUT_MS);
   try {
-    const res = await fetch(url, { signal: ctrl.signal, ...options });
+    const res = await fetch(url, { method, signal: ctrl.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } finally {
@@ -35,11 +36,13 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
   return await res.json();
 }
 
+// Local first (LAN ~10ms) → Render proxy → cloud Hubitat URL
 async function fetchHubitat(hub, path, method = 'GET') {
   if (hub.ip) {
-    try {
-      return await fetchViaProxy(hub, path, method);
-    } catch { /* fall through to cloud */ }
+    try { return await fetchDirectLocal(hub, path, method); } catch { /* fall through */ }
+  }
+  if (hub.ip) {
+    try { return await fetchViaProxy(hub, path, method); } catch { /* fall through */ }
   }
   if (hub.cloudUrl) {
     return await fetchViaCloudProxy(hub, path, method);
@@ -146,21 +149,15 @@ export async function sendDeviceCommand(hub, deviceId, command, arg) {
 export async function checkLocalHubReachable(hub) {
   if (!hub?.ip) return false;
   try {
-    await fetchWithTimeout(
-      '/api/hub-proxy',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: hub.type, ip: hub.ip, appId: hub.appId,
-          token: hub.token,
-          path: `/apps/api/${hub.appId}/devices?access_token=${hub.token}`,
-          method: 'GET',
-        }),
-      },
-      SHORT_TIMEOUT_MS
-    );
-    return true;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), LOCAL_TIMEOUT_MS);
+    try {
+      // no-cors: any response means the hub is reachable on LAN
+      await fetch(`https://${hub.ip}`, { signal: ctrl.signal, mode: 'no-cors' });
+      return true;
+    } finally {
+      clearTimeout(timer);
+    }
   } catch {
     return false;
   }

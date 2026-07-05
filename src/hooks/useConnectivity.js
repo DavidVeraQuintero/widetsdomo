@@ -1,66 +1,65 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Returns: 'online' | 'lan-only' | 'offline'
+const LAN_TIMEOUT_MS   = 1000;
+const CLOUD_TIMEOUT_MS = 3000;
+
+// Returns: 'local' | 'cloud' | 'offline'
+// 'local'  — Hubitat reachable on LAN → commands go direct
+// 'cloud'  — internet up but no LAN   → commands go via Render proxy
+// 'offline'— neither reachable        → blocking modal
 export function useConnectivity(hub) {
-  const [mode, setMode] = useState('online');
+  const [mode, setMode] = useState('cloud');
   const timerRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function check() {
-      // Check internet by pinging our own server
-      let hasInternet = false;
-      try {
-        const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 3000);
-        const r = await fetch('/api/me', { signal: ctrl.signal });
-        clearTimeout(t);
-        hasInternet = r.status !== 0;
-      } catch { hasInternet = false; }
+      const [hasLan, hasInternet] = await Promise.all([
+        // LAN: no-cors ping to hub IP — any response = reachable, no CORS issues
+        hub?.ip
+          ? (async () => {
+              try {
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), LAN_TIMEOUT_MS);
+                await fetch(`https://${hub.ip}`, { signal: ctrl.signal, mode: 'no-cors' });
+                clearTimeout(t);
+                return true;
+              } catch { return false; }
+            })()
+          : Promise.resolve(false),
 
-      // Check LAN by trying a direct fetch to local hub via proxy (only when internet is down)
-      let hasLan = false;
-      if (!hasInternet && hub?.ip) {
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 2000);
-          const r = await fetch('/api/hub-proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: hub.type, ip: hub.ip, appId: hub.appId,
-              token: hub.token,
-              path: `/apps/api/${hub.appId}/devices?access_token=${hub.token}`,
-            }),
-            signal: ctrl.signal,
-          });
-          clearTimeout(t);
-          hasLan = r.ok;
-        } catch { hasLan = false; }
-      }
+        // Internet: ping own server
+        (async () => {
+          try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), CLOUD_TIMEOUT_MS);
+            const r = await fetch('/api/me', { signal: ctrl.signal });
+            clearTimeout(t);
+            return r.status !== 0;
+          } catch { return false; }
+        })(),
+      ]);
 
       if (cancelled) return;
 
-      if (hasInternet)     setMode('online');
-      else if (hasLan)     setMode('lan-only');
-      else                 setMode('offline');
+      if (hasLan)           setMode('local');
+      else if (hasInternet) setMode('cloud');
+      else                  setMode('offline');
 
       timerRef.current = setTimeout(check, 10_000);
     }
 
     check();
 
-    const onOnline  = () => check();
-    const onOffline = () => check();
-    window.addEventListener('online',  onOnline);
-    window.addEventListener('offline', onOffline);
+    window.addEventListener('online',  check);
+    window.addEventListener('offline', check);
 
     return () => {
       cancelled = true;
       clearTimeout(timerRef.current);
-      window.removeEventListener('online',  onOnline);
-      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online',  check);
+      window.removeEventListener('offline', check);
     };
   }, [hub?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
