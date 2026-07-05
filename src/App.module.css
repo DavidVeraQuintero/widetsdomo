@@ -1,130 +1,274 @@
-.layout {
-  position: relative;
+/* ── Shell layout ─────────────────────────────────────────────────────────── */
+.shell {
   display: flex;
-  flex: 1;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: var(--bg-base);
 }
 
-.floatingPanel {
-  position: absolute;
-  z-index: 50;
+/* ── Icon strip ───────────────────────────────────────────────────────────── */
+/* ── Hamburger (sidebar oculto) ───────────────────────────────────────────── */
+.hamburger {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  width: 34px;
+  height: 34px;
+  background: rgba(10, 18, 40, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.hamburger:hover {
+  background: rgba(59, 130, 246, 0.25);
+  color: white;
+}
+
+/* ── Collapse button (dentro del strip) ───────────────────────────────────── */
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  margin-bottom: 4px;
+}
+.collapseBtn:hover {
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Icon strip ───────────────────────────────────────────────────────────── */
+.iconStripHidden {
+  width: 0 !important;
+  overflow: hidden;
+  border: none;
+}
+
+.iconStrip {
+  flex-shrink: 0;
+  width: 52px;
+  height: 100%;
+  background: rgba(8, 15, 32, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   flex-direction: column;
-  width: 260px;
-  min-width: 220px;
-  min-height: 44px;
-  max-height: 95vh;
-  background: rgba(10, 18, 40, 0.42);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  z-index: 100;
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .floatingPanel {
-    width: 60vw;
-    max-width: 60vw;
-    height: calc(100vh - 80px);
-    max-height: calc(100vh - 80px);
-    top: 0;
-    left: 0;
-    right: auto;
-    bottom: 40px;
-    border-radius: 0;
-  }
-}
-
-.dragHandle {
+.stripTop,
+.stripBottom {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 18px;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px 14px 0 0;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-}
-.dragHandle:active { cursor: grabbing; }
-
-.dragDots {
-  color: rgba(255, 255, 255, 0.28);
-  font-size: 14px;
+  gap: 2px;
+  width: 100%;
 }
 
-.sidebarToggle {
+.iconBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 44px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.iconBtnActive {
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--accent, #3b82f6);
+  border-left: 2px solid var(--accent, #3b82f6);
+}
+
+.iconBtnActive::before {
+  content: '';
   position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 100;
-  background: rgba(15, 25, 50, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  color: rgba(255, 255, 255, 0.70);
-  font-size: 16px;
-  width: 36px;
-  height: 36px;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 60%;
+  background: var(--accent, #3b82f6);
+  border-radius: 0 2px 2px 0;
+}
+
+.iconBtnIcon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.iconBtnLabel {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 42px;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+/* ── Connection chip ──────────────────────────────────────────────────────── */
+.connChip {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.sidebarToggle:hover {
-  background: rgba(59, 130, 246, 0.22);
-  border-color: var(--accent);
-  color: white;
+  height: 32px;
+  width: 44px;
 }
 
-.tabBar {
-  display: flex;
+.connDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: block;
+}
+
+.connDotGreen  { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+.connDotAmber  { background: #f59e0b; box-shadow: 0 0 6px #f59e0b88; }
+
+/* ── Content panel ────────────────────────────────────────────────────────── */
+.contentPanel {
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.22);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(10, 18, 40, 0.97);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
 }
 
-.tabBtn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: rgba(255, 255, 255, 0.40);
-  font-size: 15px;
-  padding: 8px 4px;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-.tabBtn:hover { color: rgba(255, 255, 255, 0.75); }
-
-.tabBtnActive {
-  color: white;
-  border-bottom-color: var(--accent);
-  background: rgba(59, 130, 246, 0.12);
-}
-
-.tabClose {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: rgba(255, 255, 255, 0.28);
-  font-size: 12px;
-  padding: 8px 10px;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-.tabClose:hover { color: var(--danger, #ef4444); }
-
-.tabContent {
-  flex: 1;
+.contentPanelOpen {
+  width: 272px;
   overflow-y: auto;
-  min-height: 0;
+}
+
+/* ── Canvas area ──────────────────────────────────────────────────────────── */
+.canvasArea {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Panel header ─────────────────────────────────────────────────────────── */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 16px;
+  height: 40px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.panelTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.panelClose {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.panelClose:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Cuenta tab ───────────────────────────────────────────────────────────── */
+.cuentaPanel {
+  padding: 28px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cuentaTitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.cuentaSub {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.logoutBtn {
+  padding: 10px 0;
+  width: 100%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.logoutBtn:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .iconBtnLabel { display: none; }
+  .iconBtn { height: 42px; }
+  .contentPanelOpen { width: 85vw; }
 }
