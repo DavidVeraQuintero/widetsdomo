@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import { addImage, removeImage, getImages } from './db.js';
 import { broadcast } from './broadcast.js';
 
-const UPLOADS_DIR = path.join(import.meta.dirname, 'uploads');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),

@@ -5,7 +5,9 @@ import cookieParser from 'cookie-parser';
 import { createServer } from 'node:http';
 import { WebSocketServer } from 'ws';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import {
   initDB, getAllState, saveDashboard, deleteDashboard, removeDashboardFromMeta,
   saveMeta, getImages, removeImage, getAllDashboards, saveHubs, getHubs, resetAllData
@@ -27,7 +29,7 @@ const loginLimiter = rateLimit({
 });
 
 const PORT = process.env.PORT || 3001;
-const UPLOADS_DIR = path.join(import.meta.dirname, 'uploads');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -109,7 +111,7 @@ app.post('/api/reset', async (_req, res) => {
 });
 
 // ─── Serve React build in production ────────────────────────────────────────
-const distDir = path.join(import.meta.dirname, '..', 'dist');
+const distDir = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
   app.get(/.*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
