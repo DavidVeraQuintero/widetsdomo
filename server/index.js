@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'node:http';
 import { WebSocketServer } from 'ws';
@@ -17,6 +18,14 @@ import {
   authMiddleware, verifyWsRequest, verifyToken
 } from './auth.js';
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                    // máximo 5 intentos por IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' },
+});
+
 const PORT = process.env.PORT || 3001;
 const UPLOADS_DIR = path.join(import.meta.dirname, 'uploads');
 
@@ -30,7 +39,7 @@ app.use(cookieParser());
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // ─── Auth routes (no auth middleware) ────────────────────────────────────────
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { user, password } = req.body ?? {};
   if (!user || !password) return res.status(400).json({ error: 'Missing credentials' });
   const ok = await verifyCredentials(user, password);
