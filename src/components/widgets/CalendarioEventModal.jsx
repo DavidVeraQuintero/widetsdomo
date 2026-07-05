@@ -61,7 +61,7 @@ export default function CalendarioEventModal({ event, defaultDate, onClose, acce
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} onClick={stop} onMouseDown={stop}>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>Título</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>Título</div>
           <input
             style={inputStyle}
             value={title}
@@ -70,15 +70,15 @@ export default function CalendarioEventModal({ event, defaultDate, onClose, acce
           />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>Fecha</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>Fecha</div>
           <input type="date" style={inputStyle} value={date} onChange={e => setDate(e.target.value)} />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>Hora inicio</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>Hora inicio</div>
           <input type="time" style={inputStyle} value={startTime} onChange={e => setStartTime(e.target.value)} />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>Duración</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 3 }}>Duración</div>
           <select
             style={{ ...inputStyle, cursor: 'pointer' }}
             value={duration}

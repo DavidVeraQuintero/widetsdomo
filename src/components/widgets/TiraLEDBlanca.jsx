@@ -59,12 +59,12 @@ function TiraBlancaModal({ config, onConfigChange, onClose, accentColor }) {
         </div>
         <div style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:13, marginBottom:16 }}>{name}</div>
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Brillo · {brightness}%</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Brillo · {brightness}%</div>
           <Slider value={brightness} onChange={v => cfg({ brightness: v })} showVal={false} />
         </div>
         <Segments on={on} color={accentColor} brightness={brightness} />
         <IconSection typeId="tira-led" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
-        <div style={{ textAlign:'center', marginTop:14, fontSize:10, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+        <div style={{ textAlign:'center', marginTop:14, fontSize:12, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
       </div>
     </div>,
     document.body
@@ -77,7 +77,11 @@ export default function TiraLEDBlanca({ size, config, onConfigChange, accentColo
   const icons = useWidgetIcons('tira-led', config.icons);
 
   const toggle = () => onConfigChange({ ...config, on: !on });
-  const setBrightness = (v) => onConfigChange({ ...config, brightness: v });
+  const setBrightness = (v) => {
+    const newConfig = { ...config, brightness: v };
+    if (!on && v > 0) newConfig.on = true;
+    onConfigChange(newConfig);
+  };
   const patchConfig = (patch) => onConfigChange({ ...config, ...patch });
   const longPress = useLongPress(() => setModal(true));
 
@@ -86,17 +90,18 @@ export default function TiraLEDBlanca({ size, config, onConfigChange, accentColo
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <StripIcon color={accentColor} on={on} size={50} iconSize={44} icons={icons} longPressProps={{ ...longPress, onClick: e => { e.stopPropagation(); toggle(); } }} />
-      <span style={{ fontSize:11, color:on?accentColor:'var(--text-dim)', transition:'color 0.2s' }}>{brightness}%</span>
+    <div className="w-body" style={{ flexDirection:'column', justifyContent:'center', alignItems:'center', gap:4 }}>
+      <span style={{ cursor:'pointer', userSelect:'none', flexShrink:0 }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}>
+        <StripIcon color={accentColor} on={on} size={40} iconSize={44} icons={icons} longPressProps={{}} />
+      </span>
+      <span style={{ fontSize:12, color: on ? '#ffffff' : 'var(--text-secondary)', transition:'color 0.2s', flexShrink:0 }}>{brightness}%</span>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <StripIcon color={accentColor} on={on} size={50} iconSize={44} icons={icons} longPressProps={longPress} />
       </div>
@@ -107,14 +112,16 @@ export default function TiraLEDBlanca({ size, config, onConfigChange, accentColo
   );
 
   if (size === '2x1') return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'10px 12px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <StripIcon color={accentColor} on={on} size={28} iconSize={13} icons={icons} longPressProps={longPress} />
-        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <StripIcon color={accentColor} on={on} size={38} iconSize={30} icons={icons} longPressProps={longPress} />
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-        <span style={{ fontSize:10, color:on?accentColor:'var(--text-secondary)', flexShrink:0 }}>{brightness}%</span>
+        <span style={{ fontSize:12, color:on?accentColor:'var(--text-secondary)', flexShrink:0 }}>{brightness}%</span>
         <Slider value={brightness} onChange={setBrightness} showVal={false} />
       </div>
       {Modal}
@@ -124,15 +131,14 @@ export default function TiraLEDBlanca({ size, config, onConfigChange, accentColo
   // 2x2
   return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">✨ Tira LED</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8 }}>
-        <StripIcon color={accentColor} on={on} size={52} iconSize={24} icons={icons} longPressProps={longPress} />
-        <div className="w-name">{name}</div>
+        <StripIcon color={accentColor} on={on} size={72} iconSize={48} icons={icons} longPressProps={longPress} />
+        <div className="w-name-lg">{name}</div>
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', marginBottom:4 }}>Brillo · {brightness}%</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', marginBottom:4 }}>Brillo · {brightness}%</div>
       <Slider value={brightness} onChange={setBrightness} showVal={false} />
       {Modal}
     </div>

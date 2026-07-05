@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useLongPress, ModalBase } from './widgetUtils';
 import { useCalendar } from '../../store/calendarStore';
 import CalendarioEventModal from './CalendarioEventModal';
@@ -14,13 +15,33 @@ function todayISO() {
 }
 
 function isoToDateParts(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return { year: d.getFullYear(), month: d.getMonth(), day: d.getDate(), weekday: d.getDay() };
+  // Parse YYYY-MM-DD format
+  const match = iso.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return { year: 2026, month: 0, day: 1, weekday: 0 };
+
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10) - 1; // 0-indexed
+  const day = parseInt(match[3], 10);
+
+  // Use UTC to avoid timezone issues
+  const d = new Date(Date.UTC(year, month, day));
+
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth(),
+    day: d.getUTCDate(),
+    weekday: d.getUTCDay()
+  };
 }
 
 function addDays(isoDate, n) {
-  const d = new Date(isoDate + 'T00:00:00');
-  d.setDate(d.getDate() + n);
+  const match = isoDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return isoDate;
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10) - 1;
+  const day = parseInt(match[3], 10);
+  const d = new Date(Date.UTC(year, month, day));
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -82,7 +103,7 @@ function ConfigModal({ config, onConfigChange, onClose, accentColor }) {
     <ModalBase title="⚙ Ajustes del Calendario" onClose={onClose} borderColor={accentColor}>
       <div onClick={stop} onMouseDown={stop} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Nombre del widget</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>Nombre del widget</div>
           <input
             style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12, width: '100%', boxSizing: 'border-box' }}
             value={name}
@@ -93,16 +114,16 @@ function ConfigModal({ config, onConfigChange, onClose, accentColor }) {
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Cuentas Vinculadas</div>
           {state.accounts.length === 0 ? (
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 8 }}>No hay cuentas de Google vinculadas.</div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 8 }}>No hay cuentas de Google vinculadas.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
               {state.accounts.map(acc => (
                 <div key={acc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '6px 8px', borderRadius: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     {acc.avatarUrl ? <img src={acc.avatarUrl} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} /> : <div style={{ width: 20, height: 20, borderRadius: '50%', background: acc.color }} />}
-                    <div style={{ fontSize: 11, color: 'var(--text-primary)' }}>{acc.email}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-primary)' }}>{acc.email}</div>
                   </div>
-                  <button className="w-btn w-btn-sm" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '2px 6px', fontSize: 9 }} onClick={() => dispatch({ type: 'REMOVE_ACCOUNT', id: acc.id })}>
+                  <button className="w-btn w-btn-sm" style={{ borderColor: '#ef4444', color: '#ef4444', padding: '2px 6px', fontSize: 12 }} onClick={() => dispatch({ type: 'REMOVE_ACCOUNT', id: acc.id })}>
                     Quitar
                   </button>
                 </div>
@@ -125,7 +146,7 @@ function ConfigModal({ config, onConfigChange, onClose, accentColor }) {
 
 function EventList({ events, fontSize, accentColor, onEdit }) {
   if (events.length === 0) {
-    return <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center', marginTop: 12 }}>Sin eventos programados</div>;
+    return <div style={{ fontSize: 12, color: '#fff', textAlign: 'center', marginTop: 12 }}>Sin eventos programados</div>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -163,8 +184,148 @@ function EventList({ events, fontSize, accentColor, onEdit }) {
   );
 }
 
+function MonthModal({ onClose, accentColor }) {
+  const { state } = useCalendar();
+  const today = todayISO();
+  const todayParts = isoToDateParts(today);
+
+  const [viewYear,     setViewYear]     = useState(todayParts.year);
+  const [viewMonth,    setViewMonth]    = useState(todayParts.month);
+  const [selectedDay,  setSelectedDay]  = useState(today);
+  const [creating,     setCreating]     = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const totalDays   = daysInMonth(viewYear, viewMonth);
+  const startOffset = firstWeekdayOffset(viewYear, viewMonth);
+  const cells = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+
+  const monthPrefix = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`;
+  const allEvents = [...state.events, ...(state.googleEvents || [])];
+  const eventDates  = new Set(allEvents.filter(e => e.date.startsWith(monthPrefix)).map(e => e.date));
+
+  const selectedEvents = allEvents
+    .filter(e => e.date === selectedDay)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const stop = e => e.stopPropagation();
+
+  if (creating) {
+    return <CalendarioEventModal defaultDate={selectedDay} onClose={() => setCreating(false)} accentColor={accentColor} />;
+  }
+  if (editingEvent) {
+    return <CalendarioEventModal event={editingEvent} onClose={() => setEditingEvent(null)} accentColor={accentColor} />;
+  }
+
+  const selParts = isoToDateParts(selectedDay);
+
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.65)' }}
+      onMouseDown={e => { e.stopPropagation(); onClose(); }}
+    >
+      <div
+        style={{ background: 'linear-gradient(135deg,#0f172a,#0a1f3d)', border: `1px solid ${accentColor}`, borderRadius: 16, padding: 20, width: 300, boxShadow: '0 0 40px rgba(0,0,0,0.5)', maxHeight: '85vh', overflowY: 'auto' }}
+        onMouseDown={stop}
+        onClick={stop}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+          <button className="w-btn w-btn-sm" onMouseDown={stop} onClick={prevMonth}>‹</button>
+          <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '1rem' }}>
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </span>
+          <button className="w-btn w-btn-sm" onMouseDown={stop} onClick={nextMonth}>›</button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '0.14rem', marginBottom: '0.28rem' }}>
+          {['L','M','X','J','V','S','D'].map(d => (
+            <div key={d} style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.95)', fontWeight: 600, paddingBottom: '0.14rem' }}>{d}</div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2 }}>
+          {cells.map((day, i) => {
+            if (!day) return <div key={i} />;
+            const iso        = buildIso(viewYear, viewMonth, day);
+            const isToday    = iso === today;
+            const isSelected = iso === selectedDay;
+            const hasEvents  = eventDates.has(iso);
+            return (
+              <div
+                key={i}
+                onMouseDown={stop}
+                onClick={() => setSelectedDay(iso)}
+                style={{
+                  textAlign: 'center', cursor: 'pointer', borderRadius: '0.35rem', padding: '0.21rem 0',
+                  minHeight: '1.43rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  background: isSelected ? accentColor : isToday ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  color: isSelected ? '#fff' : isToday ? accentColor : 'var(--text-primary)',
+                  fontWeight: isToday || isSelected ? 700 : 400,
+                  fontSize: 12,
+                }}
+              >
+                {day}
+                {hasEvents && (
+                  <div style={{ width: '0.28rem', height: '0.28rem', borderRadius: '50%', background: isSelected ? '#fff' : accentColor, margin: '0.07rem auto 0' }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {DAY_NAMES[selParts.weekday]} {selParts.day} {MONTH_SHORT[selParts.month]}
+            </span>
+            <button className="w-btn w-btn-sm" onMouseDown={stop} onClick={() => setCreating(true)}>+ Añadir</button>
+          </div>
+          {selectedEvents.length === 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', padding: '8px 0' }}>Sin eventos</div>
+          )}
+          {selectedEvents.map(ev => {
+            const evColor = ev.isGoogle ? ev.accountColor : accentColor;
+            return (
+              <div
+                key={ev.id}
+                onMouseDown={stop}
+                onClick={() => !ev.isGoogle && setEditingEvent(ev)}
+                style={{ borderLeft: `3px solid ${evColor}`, padding: '4px 8px', marginBottom: 6, cursor: ev.isGoogle ? 'default' : 'pointer', borderRadius: '0 4px 4px 0', background: 'rgba(255,255,255,0.05)' }}
+              >
+                <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{ev.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  {ev.startTime} · {formatDuration(ev.duration)}
+                  {ev.isGoogle && <span style={{ marginLeft: 6, opacity: 0.5 }}>☁️ Google</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function StackedEvents({ events, totalEvents, currentIndex, fontSize, accentColor, onEdit, onNext, onPrev }) {
-  if (events.length === 0) return <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center', marginTop: 12 }}>Sin eventos programados</div>;
+  if (events.length === 0) return <div style={{ fontSize: 12, color: '#fff', textAlign: 'center', marginTop: 12 }}>Sin eventos programados</div>;
   
   const behind = events.slice(1, 4); // max 3 behind
   const activeEv = events[0];
@@ -233,7 +394,7 @@ function StackedEvents({ events, totalEvents, currentIndex, fontSize, accentColo
         {/* Controles de navegación */}
         {totalEvents > 1 && (
           <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600 }}>{currentIndex + 1} de {totalEvents}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>{currentIndex + 1} de {totalEvents}</span>
             <div style={{ display: 'flex', gap: 4 }}>
               <button className="w-btn w-btn-sm" style={{ padding: '2px 8px', background: 'rgba(0,0,0,0.2)', borderColor: 'transparent' }} onClick={e => { e.stopPropagation(); onPrev(); }}>‹</button>
               <button className="w-btn w-btn-sm" style={{ padding: '2px 8px', background: 'rgba(0,0,0,0.2)', borderColor: 'transparent' }} onClick={e => { e.stopPropagation(); onNext(); }}>›</button>
@@ -245,13 +406,14 @@ function StackedEvents({ events, totalEvents, currentIndex, fontSize, accentColo
   );
 }
 
-export default function CalendarioDia({ size, config, onConfigChange, accentColor }) {
+export default function CalendarioDia({ size = '2x2', config, onConfigChange, accentColor }) {
   const { state } = useCalendar();
-  const [viewDate,     setViewDate]     = useState(todayISO);
+  const [viewDate,     setViewDate]     = useState(todayISO());
   const [configModal,  setConfigModal]  = useState(false);
   const [createModal,  setCreateModal]  = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [activeEventIdx, setActiveEventIdx] = useState(0);
+  const [modal, setModal] = useState(false);
 
   useEffect(() => {
     setActiveEventIdx(0);
@@ -271,33 +433,112 @@ export default function CalendarioDia({ size, config, onConfigChange, accentColo
   const headerColor = isWeekend ? '#ef4444' : accentColor;
 
   const realIdx = Math.min(activeEventIdx, Math.max(0, dayEvents.length - 1));
-  const orderedEvents = dayEvents.length > 0 
+  const orderedEvents = dayEvents.length > 0
     ? (realIdx === 0 ? dayEvents : [...dayEvents.slice(realIdx), ...dayEvents.slice(0, realIdx)])
     : [];
+
+  // Handle 1x1 mini calendar
+  if (size === '1x1') {
+    const today = todayISO();
+    const dots = Math.min(allEvents.filter(e => e.date === today).length, 3);
+    const todayParts = isoToDateParts(today);
+    const miniHeaderColor = todayParts.weekday === 0 || todayParts.weekday === 6 ? '#ef4444' : accentColor;
+
+    return (
+      <div
+        className="w-body"
+        style={{
+          padding: 0,
+          gap: 0,
+          cursor: 'pointer',
+          background: 'transparent',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 8,
+          height: '100%'
+        }}
+        {...useLongPress(() => setModal(true))}
+      >
+        <div style={{
+          background: 'transparent',
+          color: miniHeaderColor,
+          textAlign: 'center',
+          fontSize: 12,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          padding: '6px 4px',
+          borderBottom: `2px solid ${miniHeaderColor}`,
+          borderRadius: '8px 8px 0 0',
+          transition: 'color 200ms ease, border-color 200ms ease'
+        }}>
+          {DAY_NAMES[todayParts.weekday].substring(0, 3)}
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px 4px', gap: 3 }}>
+          <div style={{
+            fontSize: 24,
+            fontWeight: 900,
+            color: '#fff',
+            lineHeight: 1,
+            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+            transition: 'all 200ms ease'
+          }}>
+            {todayParts.day}
+          </div>
+
+          <div style={{
+            fontSize: 12,
+            color: miniHeaderColor,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: 0,
+            transition: 'color 200ms ease'
+          }}>
+            {MONTH_SHORT[todayParts.month]}
+          </div>
+
+          {dots > 0 && (
+            <div style={{ display: 'flex', gap: 2, marginTop: 2, height: 3 }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} style={{
+                  width: 3,
+                  height: 3,
+                  borderRadius: '50%',
+                  background: i < dots ? miniHeaderColor : 'rgba(255,255,255,0.1)',
+                  transition: 'all 200ms ease'
+                }} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // -------------------------------------------------------------
   // Layout 2x2 (Compacto)
   // -------------------------------------------------------------
   if (size === '2x2') {
     return (
-      <div className="w-body" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }} {...longPress}>
-        <div style={{ background: `linear-gradient(135deg, ${headerColor}22, transparent)`, borderBottom: `1px solid ${headerColor}33`, padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="w-body" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05))' }} {...longPress}>
+        <div style={{ borderBottom: `2px solid ${headerColor}`, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: `0 4px 12px trasparent 33`, transition: 'all 200ms ease' }}>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: headerColor }}>{DAY_NAMES[parts.weekday]}</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>{parts.day} <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{MONTH_SHORT[parts.month]}</span></div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff' }}>{DAY_NAMES[parts.weekday]}</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>{parts.day} <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{MONTH_SHORT[parts.month]}</span></div>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button className="w-btn w-btn-sm" style={{ padding: '2px 6px', fontSize: 12 }} onClick={() => setViewDate(d => addDays(d, -1))} onMouseDown={stop}>‹</button>
-            <button className="w-btn w-btn-sm" style={{ padding: '2px 6px', fontSize: 12 }} onClick={() => setViewDate(d => addDays(d, 1))} onMouseDown={stop}>›</button>
+            <button className="w-btn w-btn-sm" style={{ padding: '4px 6px', fontSize: 12, background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => setViewDate(d => addDays(d, -1))} onMouseDown={stop}>‹</button>
+            <button className="w-btn w-btn-sm" style={{ padding: '4px 6px', fontSize: 12, background: 'rgba(255,255,255,0.15)', border: 'none' }} onClick={() => setViewDate(d => addDays(d, 1))} onMouseDown={stop}>›</button>
           </div>
         </div>
-        <div style={{ flex: 1, padding: '10px 14px', display: 'flex' }}>
-          <StackedEvents 
-            events={orderedEvents} 
+        <div style={{ flex: 1, padding: '10px 12px', display: 'flex' }}>
+          <StackedEvents
+            events={orderedEvents}
             totalEvents={dayEvents.length}
             currentIndex={realIdx}
-            fontSize={12} 
-            accentColor={accentColor} 
+            fontSize={11}
+            accentColor={accentColor}
             onEdit={setEditingEvent}
             onNext={() => setActiveEventIdx(i => (i + 1) % dayEvents.length)}
             onPrev={() => setActiveEventIdx(i => (i - 1 + dayEvents.length) % dayEvents.length)}
@@ -314,19 +555,19 @@ export default function CalendarioDia({ size, config, onConfigChange, accentColo
   // -------------------------------------------------------------
   if (size === '2x4') {
     return (
-      <div className="w-body" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }} {...longPress}>
-        <div style={{ background: headerColor, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
+      <div className="w-body" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'linear-gradient(135deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05))' }} {...longPress}>
+        <div style={{  borderBottom: `2px solid ${headerColor}`, padding: '14px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', boxShadow: `0 4px 12px trasparent 33`, transition: 'all 200ms ease' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: 'rgba(255,255,255,0.8)' }}>{DAY_NAMES[parts.weekday]}</div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>{parts.day}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', marginTop: 2 }}>{MONTH_NAMES[parts.month]} {parts.year}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, color: '#fff' }}>{DAY_NAMES[parts.weekday]}</div>
+            <div style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 3 }}>{parts.day}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginTop: 3 }}>{MONTH_NAMES[parts.month]} {parts.year}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button className="w-btn w-btn-sm" style={{ background: 'rgba(0,0,0,0.2)', borderColor: 'transparent', padding: '4px 8px' }} onClick={() => setViewDate(d => addDays(d, -1))} onMouseDown={stop}>‹</button>
-              <button className="w-btn w-btn-sm" style={{ background: 'rgba(0,0,0,0.2)', borderColor: 'transparent', padding: '4px 8px' }} onClick={() => setViewDate(d => addDays(d, 1))} onMouseDown={stop}>›</button>
+            <div style={{ display: 'flex', gap: 5 }}>
+              <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'transparent', padding: '4px 8px', fontSize: 12, border: 'none' }} onClick={() => setViewDate(d => addDays(d, -1))} onMouseDown={stop}>‹</button>
+              <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'transparent', padding: '4px 8px', fontSize: 12, border: 'none' }} onClick={() => setViewDate(d => addDays(d, 1))} onMouseDown={stop}>›</button>
             </div>
-            <button className="w-btn w-btn-sm" style={{ background: '#fff', color: headerColor, borderColor: '#fff', fontWeight: 700 }} onClick={() => setCreateModal(true)} onMouseDown={stop}>+ Añadir</button>
+            <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: 11, border: 'none' }} onClick={() => setCreateModal(true)} onMouseDown={stop}>+ Evento</button>
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
@@ -352,19 +593,19 @@ export default function CalendarioDia({ size, config, onConfigChange, accentColo
     <div className="w-body" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'row' }} {...longPress}>
       {/* Panel Izquierdo: Calendario */}
       <div style={{ flex: '1.2', borderRight: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', background: 'rgba(0,0,0,0.2)' }} onMouseDown={stop}>
-        <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>{MONTH_NAMES[parts.month]} {parts.year}</span>
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button className="w-btn w-btn-sm" onClick={() => setViewDate(d => buildIso(parts.year, parts.month - 1, 1))}>‹</button>
-            <button className="w-btn w-btn-sm" onClick={() => setViewDate(todayISO())}>Hoy</button>
-            <button className="w-btn w-btn-sm" onClick={() => setViewDate(d => buildIso(parts.year, parts.month + 1, 1))}>›</button>
+        <div style={{ padding: '12px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px solid ${headerColor}`, transition: 'border-color 200ms ease' }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', flex: 1, minWidth: 0 }}>{MONTH_NAMES[parts.month]} {parts.year}</span>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'transparent', padding: '4px 8px', fontSize: 12, border: 'none', color: '#fff' }} onClick={() => setViewDate(d => buildIso(parts.year, parts.month - 1, 1))}>‹</button>
+            <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'transparent', padding: '4px 8px', fontSize: 12, border: 'none', color: '#fff' }} onClick={() => setViewDate(todayISO())}>Hoy</button>
+            <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'transparent', padding: '4px 8px', fontSize: 12, border: 'none', color: '#fff' }} onClick={() => setViewDate(d => buildIso(parts.year, parts.month + 1, 1))}>›</button>
           </div>
         </div>
         
         <div style={{ padding: '12px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 8 }}>
             {['L','M','X','J','V','S','D'].map((d, i) => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: (i===5||i===6) ? '#ef4444' : 'var(--text-secondary)' }}>{d}</div>
+              <div key={d} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: (i===5||i===6) ? '#ef4444' : 'var(--text-secondary)' }}>{d}</div>
             ))}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gridAutoRows: '1fr', gap: 4, flex: 1 }}>
@@ -381,9 +622,9 @@ export default function CalendarioDia({ size, config, onConfigChange, accentColo
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', borderRadius: 8,
-                    background: isSelected ? accentColor : isToday ? 'rgba(255,255,255,0.08)' : 'transparent',
-                    border: isToday && !isSelected ? `1px solid ${accentColor}` : '1px solid transparent',
-                    color: isSelected ? '#fff' : isToday ? accentColor : 'var(--text-primary)',
+                    background: 'transparent',
+                    border: isSelected || isToday ? `2px solid ${accentColor}` : '2px solid transparent',
+                    color: 'var(--text-primary)',
                     fontWeight: isSelected || isToday ? 800 : 500,
                     fontSize: 13,
                     transition: 'all 150ms ease',
@@ -400,12 +641,12 @@ export default function CalendarioDia({ size, config, onConfigChange, accentColo
 
       {/* Panel Derecho: Agenda */}
       <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }} onMouseDown={stop}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 200ms ease' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: headerColor }}>{DAY_NAMES[parts.weekday]}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>{parts.day} de {MONTH_NAMES[parts.month]}</div>
+            <div style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: headerColor, transition: 'color 200ms ease' }}>{DAY_NAMES[parts.weekday]}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>{parts.day} de {MONTH_NAMES[parts.month]}</div>
           </div>
-          <button className="w-btn w-btn-sm" style={{ color: accentColor, borderColor: accentColor }} onClick={() => setCreateModal(true)}>+ Evento</button>
+          <button className="w-btn w-btn-sm" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', borderColor: 'rgba(255,255,255,0.3)', fontWeight: 700, fontSize: 12, border: 'none' }} onClick={() => setCreateModal(true)}>+ Evento</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
           <EventList events={dayEvents} fontSize={12} accentColor={accentColor} onEdit={ev => !ev.isGoogle && setEditingEvent(ev)} />

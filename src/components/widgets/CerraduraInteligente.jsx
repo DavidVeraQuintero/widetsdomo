@@ -23,7 +23,7 @@ function CerraduraModal({ locked, name, config, onConfigChange, onClose }) {
         onClick={() => onConfigChange({ locked: !locked })}
         onMouseDown={e => e.stopPropagation()}
       >
-        {locked ? '🔓 Desbloquear' : '🔒 Bloquear'}
+        {locked ? 'Desbloquear' : 'Bloquear'}
       </button>
       <IconSection typeId="cerradura" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
     </ModalBase>
@@ -44,33 +44,35 @@ export default function CerraduraInteligente({ size, config, onConfigChange, acc
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}><SvgIcon id={locked ? icons.locked : icons.unlocked} size={44} color={locked ? 'var(--icon-on)' : 'var(--icon-off)'} className={locked ? 'icon-glow' : ''} /></span>
-      <span style={{ fontSize:11, color:'var(--text-primary)', transition:'color 0.2s' }}>{locked ? 'Bloqueada' : 'Abierta'}</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggle(); }} {...longPress}><SvgIcon id={locked ? icons.locked : icons.unlocked} size={44} color={locked ? 'var(--icon-on)' : 'var(--icon-off)'} className={locked ? 'icon-glow' : ''} /></span>
+        <span style={{ fontSize:12, color:'var(--text-primary)', transition:'color 0.2s' }}>{locked ? 'Bloqueada' : 'Abierta'}</span>
+      </div>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">🔒 Cerradura</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={locked ? icons.locked : icons.unlocked} size={44} color={locked ? 'var(--icon-on)' : 'var(--icon-off)'} className={locked ? 'icon-glow' : ''} /></span>
       <div className="w-name">{name}</div>
       <div className="w-status" style={{ color:'var(--text-primary)' }}>{locked ? 'Bloqueada' : 'Desbloqueada'}</div>
-      <button className="w-btn" onClick={e => { e.stopPropagation(); toggle(); }} onMouseDown={e => e.stopPropagation()}>{locked ? '🔓 Desbloquear' : '🔒 Bloquear'}</button>
+      <button className="w-btn w-btn-sm" style={{ padding:'2px 12px' }} onClick={e => { e.stopPropagation(); toggle(); }} onMouseDown={e => e.stopPropagation()}>{locked ? 'Abrir' : 'Cerrar'}</button>
       {Modal}
     </div>
   );
 
   return (
-    <div className="w-row-body">
-      <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={locked ? icons.locked : icons.unlocked} size={30} color={locked ? 'var(--icon-on)' : 'var(--icon-off)'} className={locked ? 'icon-glow' : ''} /></span>
-      <div className="w-info">
-        <div className="w-name">{name}</div>
-        <div className="w-status" style={{ color:'var(--text-primary)' }}>{locked ? 'Bloqueada' : 'Desbloqueada'}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
+        <button className="w-btn w-btn-sm" style={{ fontSize:12, padding:'2px 10px' }} onClick={e => { e.stopPropagation(); toggle(); }} onMouseDown={e => e.stopPropagation()}>{locked ? 'Abrir' : 'Cerrar'}</button>
       </div>
-      <button className="w-btn w-btn-sm" onClick={e => { e.stopPropagation(); toggle(); }} onMouseDown={e => e.stopPropagation()}>{locked ? '🔓 Abrir' : '🔒 Cerrar'}</button>
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:56 }}>
+        <span style={{ cursor:'pointer', flexShrink:0 }} {...longPress}><SvgIcon id={locked ? icons.locked : icons.unlocked} size={38} color={locked ? 'var(--icon-on)' : 'var(--icon-off)'} className={locked ? 'icon-glow' : ''} /></span>
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
+      <div style={{ fontSize:12, color:'var(--text-primary)' }}>{locked ? 'Bloqueada' : 'Desbloqueada'}</div>
       {Modal}
     </div>
   );

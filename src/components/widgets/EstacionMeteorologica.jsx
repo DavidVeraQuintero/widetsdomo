@@ -13,7 +13,7 @@ function MeteoModal({ temp, humidity, pressure, wind, name, config, onConfigChan
     >
       <div style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:13, marginBottom:12 }}>{name}</div>
       <div style={{ textAlign:'center', fontSize:44, fontWeight:700, color:'var(--text-primary)', marginBottom:4 }}>{temp}°C</div>
-      <div style={{ textAlign:'center', fontSize:11, color:'var(--text-secondary)', marginBottom:16 }}>⛅ Parcialmente nublado</div>
+      <div style={{ textAlign:'center', fontSize:12, color:'var(--text-secondary)', marginBottom:16 }}>⛅ Parcialmente nublado</div>
       <div style={{ display:'flex', gap:8, marginBottom:12 }}>
         {[
           { icon:'💧', label:'Humedad', value:`${humidity}%`, col:'#67e8f9' },
@@ -23,7 +23,7 @@ function MeteoModal({ temp, humidity, pressure, wind, name, config, onConfigChan
           <div key={label} style={{ flex:1, background:'var(--accent-dim)', borderRadius:8, padding:'10px 6px', textAlign:'center' }}>
             <div style={{ fontSize:20, marginBottom:4 }}>{icon}</div>
             <div style={{ fontSize:13, fontWeight:600, color:'var(--text-primary)' }}>{value}</div>
-            <div style={{ fontSize:9, color:'var(--text-secondary)', marginTop:2 }}>{label}</div>
+            <div style={{ fontSize:12, color:'var(--text-secondary)', marginTop:2 }}>{label}</div>
           </div>
         ))}
       </div>
@@ -42,7 +42,7 @@ export default function EstacionMeteorologica({ size, config, onConfigChange, ac
   const Data = ({ icon, label, value, unit, color }) => (
     <div className="w-col w-center" style={{ flex:1 }}>
       <span style={{ fontSize:20 }}>{icon}</span>
-      <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)' }}>{value}<span style={{ fontSize:10 }}>{unit}</span></div>
+      <div style={{ fontSize:14, fontWeight:700, color:'var(--text-primary)' }}>{value}<span style={{ fontSize:12 }}>{unit}</span></div>
       <div className="w-sub">{label}</div>
     </div>
   );
@@ -51,9 +51,18 @@ export default function EstacionMeteorologica({ size, config, onConfigChange, ac
     <MeteoModal temp={temp} humidity={humidity} pressure={pressure} wind={wind} name={name} config={config} onConfigChange={patchConfig} onClose={() => setModal(false)} accentColor={accentColor} />
   );
 
+  if (size === '1x1') return (
+    <div className="w-body" style={{ flexDirection:'column', justifyContent:'center', alignItems:'center', gap:4 }}>
+      <span style={{ cursor:'pointer', userSelect:'none', flexShrink:0 }} onClick={e => { e.stopPropagation(); }} {...longPress}>
+        <SvgIcon id={icons.default} size={40} color="var(--icon-on)" className="icon-glow" />
+      </span>
+      <span style={{ fontSize:12, fontWeight:700, color:'var(--text-primary)', flexShrink:0 }}>{temp}°</span>
+      {Modal}
+    </div>
+  );
+
   if (size === '2x2') return (
     <div className="w-body">
-      <div className="w-label">⛅ Estación Meteo</div>
       <div className="w-name">{name}</div>
       <div style={{ display:'flex', flex:1, gap:8 }}>
         <div style={{ cursor:'pointer' }} {...longPress}><Data icon="🌡" label="Temp" value={temp} unit="°C" color={accentColor} /></div>
@@ -69,7 +78,6 @@ export default function EstacionMeteorologica({ size, config, onConfigChange, ac
 
   return (
     <div className="w-body">
-      <div className="w-label">⛅ Estación Meteorológica</div>
       <div className="w-name">{name}</div>
       <div style={{ display:'flex', justifyContent:'center', padding:'8px 0', cursor:'pointer' }} {...longPress}>
         <div className="w-val-big" style={{ color:'var(--text-primary)' }}>{temp}°C</div>

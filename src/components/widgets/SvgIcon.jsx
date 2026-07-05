@@ -13,7 +13,7 @@ export default function SvgIcon({ id, size = 24, color = 'currentColor', style, 
       strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ flexShrink: 0, ...style }}
+      style={{ flexShrink: 0, display: 'block', ...style }}
       className={className}
       dangerouslySetInnerHTML={{ __html: inner }}
     />

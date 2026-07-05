@@ -44,7 +44,7 @@ function CCTModal({ config, onConfigChange, onClose }) {
 
         {/* Slider de temperatura */}
         <div style={{ marginBottom:8 }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Temperatura de color</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Temperatura de color</div>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ fontSize:16 }}>🔥</span>
             <div style={{ flex:1 }}>
@@ -55,12 +55,12 @@ function CCTModal({ config, onConfigChange, onClose }) {
         </div>
 
         {/* Presets */}
-        <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginTop:14, marginBottom:8 }}>Preajustes</div>
+        <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginTop:14, marginBottom:8 }}>Preajustes</div>
         <div style={{ display:'flex', gap:8 }}>
           {[0, 25, 50, 75, 100].map(v => (
             <button
               key={v}
-              style={{ flex:1, padding:'6px 0', borderRadius:8, background:`${cctColor(v)}22`, border:`1px solid ${colorTemp === v ? cctColor(v) : 'rgba(255,255,255,0.1)'}`, cursor:'pointer', color:'var(--text-secondary)', fontSize:9, fontWeight:600 }}
+              style={{ flex:1, padding:'6px 0', borderRadius:8, background:`${cctColor(v)}22`, border:`1px solid ${colorTemp === v ? cctColor(v) : 'rgba(255,255,255,0.1)'}`, cursor:'pointer', color:'var(--text-secondary)', fontSize:12, fontWeight:600 }}
               onClick={() => cfg({ colorTemp: v })}
               onMouseDown={e => e.stopPropagation()}
             >
@@ -70,7 +70,7 @@ function CCTModal({ config, onConfigChange, onClose }) {
         </div>
 
         <IconSection typeId="lampara-cct" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
-        <div style={{ textAlign:'center', marginTop:14, fontSize:10, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+        <div style={{ textAlign:'center', marginTop:14, fontSize:12, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
       </div>
     </div>,
     document.body
@@ -83,7 +83,11 @@ export default function LamparaCCT({ size, config, onConfigChange, accentColor }
   const icons = useWidgetIcons('lampara-cct', config.icons);
 
   const toggle = () => onConfigChange({ ...config, on: !on });
-  const setTemp  = (v) => onConfigChange({ ...config, colorTemp: v });
+  const setTemp  = (v) => {
+    const newConfig = { ...config, colorTemp: v };
+    if (!on) newConfig.on = true;
+    onConfigChange(newConfig);
+  };
   const patchConfig = (patch) => onConfigChange({ ...config, ...patch });
   const longPress = useLongPress(() => setModal(true));
 
@@ -100,24 +104,26 @@ export default function LamparaCCT({ size, config, onConfigChange, accentColor }
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <Icon sz={44} iconSz={44} onClick={e => { e.stopPropagation(); toggle(); }} />
+    <div className="w-body" style={{ alignItems:'center' }}>
+      <div style={{ width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <Icon sz={44} iconSz={44} onClick={e => { e.stopPropagation(); toggle(); }} />
+      </div>
       {modal && <CCTModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <Icon sz={50} iconSz={44} />
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', textAlign:'right', marginBottom:2 }}>{label} · {colorTemp}%</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', textAlign:'right', marginBottom:2 }}>{label} · {colorTemp}%</div>
       <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-        <span style={{ fontSize:10 }}>🔥</span>
+        <span style={{ fontSize:12 }}>🔥</span>
         <div style={{ flex:1, minWidth:0 }}><Slider value={colorTemp} onChange={setTemp} showVal={false} /></div>
-        <span style={{ fontSize:10 }}>❄</span>
+        <span style={{ fontSize:12 }}>❄</span>
       </div>
       <div className="w-name" style={{ textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginTop:4 }}>{name}</div>
       {modal && <CCTModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
@@ -125,17 +131,19 @@ export default function LamparaCCT({ size, config, onConfigChange, accentColor }
   );
 
   if (size === '2x1') return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'10px 12px' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <Icon sz={28} iconSz={13} />
-        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+    <div style={{ height:'100%', position:'relative', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'16px 12px 10px 12px' }}>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, paddingRight:44 }}>
+        <Icon sz={38} iconSz={30} />
+        <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+      </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-        <span style={{ fontSize:10, flexShrink:0 }}>🔥</span>
+        <span style={{ fontSize:12, flexShrink:0 }}>🔥</span>
         <Slider value={colorTemp} onChange={setTemp} showVal={false} />
-        <span style={{ fontSize:9, color:'var(--text-secondary)', flexShrink:0 }}>{label.split(' ')[1] || label}</span>
-        <span style={{ fontSize:10, flexShrink:0 }}>❄</span>
+        <span style={{ fontSize:12, color:'var(--text-secondary)', flexShrink:0 }}>{label.split(' ')[1] || label}</span>
+        <span style={{ fontSize:12, flexShrink:0 }}>❄</span>
       </div>
       {modal && <CCTModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
     </div>
@@ -144,14 +152,13 @@ export default function LamparaCCT({ size, config, onConfigChange, accentColor }
   // 2x2
   return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">💫 Lámpara CCT</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4 }}>
-        <Icon sz={56} iconSz={28} />
-        <div className="w-name">{name}</div>
-        <div style={{ fontSize:11, color:'var(--text-secondary)', fontWeight:600 }}>{label}</div>
+        <Icon sz={60} iconSz={48} />
+        <div className="w-name-lg">{name}</div>
+        <div style={{ fontSize:12, color:'var(--text-secondary)', fontWeight:600 }}>{label}</div>
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
         <span style={{ fontSize:12 }}>🔥</span>

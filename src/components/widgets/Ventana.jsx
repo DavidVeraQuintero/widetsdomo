@@ -41,17 +41,17 @@ export default function Ventana({ size, config, onConfigChange, accentColor }) {
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={open ? icons.open : icons.closed} size={44} color={open ? 'var(--icon-on)' : 'var(--icon-off)'} className={open ? 'icon-glow' : ''} /></span>
-      <span style={{ fontSize:11, color:'var(--text-primary)' }}>{open ? 'Abierta' : 'Cerrada'}</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} {...longPress}><SvgIcon id={open ? icons.open : icons.closed} size={44} color={open ? 'var(--icon-on)' : 'var(--icon-off)'} className={open ? 'icon-glow' : ''} /></span>
+        <span style={{ fontSize:12, color:'var(--text-primary)' }}>{open ? 'Abierta' : 'Cerrada'}</span>
+      </div>
       {Modal}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body w-center">
-      <div className="w-label">🪟 Ventana</div>
       <span style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={open ? icons.open : icons.closed} size={44} color={open ? 'var(--icon-on)' : 'var(--icon-off)'} className={open ? 'icon-glow' : ''} /></span>
       <div className="w-name">{name}</div>
       <div className="w-status" style={{ color:'var(--text-primary)' }}>{open ? '● Abierta' : '● Cerrada'}</div>

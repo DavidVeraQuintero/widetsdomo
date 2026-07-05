@@ -48,11 +48,6 @@ const ToldoVisual = ({ position, color, height = 60 }) => {
           transition: 'width 0.3s ease',
           minWidth: position > 0 ? 4 : 0,
         }} />
-        {/* % badge */}
-        <div style={{
-          position: 'absolute', bottom: 4, right: 8,
-          fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)',
-        }}>{position}%</div>
       </div>
     </div>
   );
@@ -66,7 +61,7 @@ function ToldoModal({ position, name, config, onConfigChange, onClose, accentCol
       <div style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>{name}</div>
       <ToldoVisual position={position} color={accentColor} height={80} />
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 9, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Extensión · {position}%</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Extensión · {position}%</div>
         <Slider value={position} onChange={setPos} unit="%" />
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
@@ -92,15 +87,12 @@ export default function Toldo({ size, config, onConfigChange, accentColor }) {
   );
 
   if (size === '1x2') return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="w-label">Toldo</div>
-        <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
-      </div>
-      <div className="w-name">{name}</div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '8px 10px 10px', gap: 5, overflow: 'hidden' }}>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flexShrink:0 }}>{name}</div>
       <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
         <ToldoVisual position={position} color={accentColor} height="100%" />
       </div>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, textAlign: 'center', flexShrink:0 }}>{position}%</div>
       <Slider value={position} onChange={setPos} showVal={false} />
       {Modal}
     </div>
@@ -112,10 +104,8 @@ export default function Toldo({ size, config, onConfigChange, accentColor }) {
         <ToldoVisual position={position} color={accentColor} height={48} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <div className="w-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-          <span style={{ fontSize: 10, color: 'var(--text-secondary)', flexShrink: 0, marginLeft: 6 }}>{position}%</span>
-        </div>
+        <div className="w-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', margin: '2px 0 4px' }}>{position}%</div>
         <Slider value={position} onChange={setPos} showVal={false} />
       </div>
       {Modal}
@@ -126,10 +116,9 @@ export default function Toldo({ size, config, onConfigChange, accentColor }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '10px', gap: 6, overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="w-label">Toldo</div>
-        <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700 }}>{position}%</span>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0, marginRight:6 }}>{name}</div>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, flexShrink:0 }}>{position}%</span>
       </div>
-      <div className="w-name">{name}</div>
       <div style={{ flex: 1, cursor: 'pointer', minHeight: 0 }} {...longPress}>
         <ToldoVisual position={position} color={accentColor} height="100%" />
       </div>

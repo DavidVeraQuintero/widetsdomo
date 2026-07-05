@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from './Toggle';
 import Slider from './Slider';
@@ -66,10 +66,10 @@ function TiraLEDModal({ config, onConfigChange, onClose }) {
           <div style={{ color:'var(--text-secondary)', fontSize:12, fontFamily:'monospace', flexShrink:0 }}>{color}</div>
         </div>
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Brillo · {brightness}%</div>
+          <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:6 }}>Brillo · {brightness}%</div>
           <Slider value={brightness} onChange={v => cfg({ brightness: v })} showVal={false} />
         </div>
-        <div style={{ fontSize:9, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>Colores rápidos</div>
+        <div style={{ fontSize:12, color:'var(--text-secondary)', textTransform:'uppercase', letterSpacing:1, marginBottom:8 }}>Colores rápidos</div>
         <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
           {PRESETS.map(c => (
             <button key={c} style={{ width:28, height:28, borderRadius:'50%', background:c, border:color===c?'2px solid white':'2px solid rgba(255,255,255,0.15)', cursor:'pointer', flexShrink:0 }}
@@ -79,7 +79,7 @@ function TiraLEDModal({ config, onConfigChange, onClose }) {
         {/* Live preview */}
         <Segments on={on} color={color} brightness={brightness} />
         <IconSection typeId="tira-led-rgb" config={config} onConfigChange={onConfigChange} resolvedIcons={icons} />
-        <div style={{ textAlign:'center', marginTop:14, fontSize:10, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+        <div style={{ textAlign:'center', marginTop:14, fontSize:12, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
       </div>
     </div>,
     document.body
@@ -93,21 +93,27 @@ export default function TiraLED({ size, config, onConfigChange, accentColor }) {
 
   const toggle = () => onConfigChange({ ...config, on: !on });
   const setColor = (c) => onConfigChange({ ...config, color: c });
-  const setBrightness = (v) => onConfigChange({ ...config, brightness: v });
+  const setBrightness = (v) => {
+    const newConfig = { ...config, brightness: v };
+    if (!on && v > 0) newConfig.on = true;
+    onConfigChange(newConfig);
+  };
   const patchConfig = (patch) => onConfigChange({ ...config, ...patch });
   const longPress = useLongPress(() => setModal(true));
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <StripIcon color={color} on={on} size={50} iconSize={44} icons={icons} longPressProps={{ ...longPress, onClick: e => { e.stopPropagation(); toggle(); } }} />
+    <div className="w-body" style={{ alignItems:'center' }}>
+      <div className="w-name" style={{ width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
+      <div style={{ marginTop:'auto' }}>
+        <StripIcon color={color} on={on} size={40} iconSize={34} icons={icons} longPressProps={{ ...longPress, onClick: e => { e.stopPropagation(); toggle(); } }} />
+      </div>
       {modal && <TiraLEDModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
     </div>
   );
 
   if (size === '1x2') return (
     <div className="w-body">
-      <div style={{ display:'flex', justifyContent:'flex-end' }}><Toggle on={on} onToggle={toggle} /></div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={on} onToggle={toggle} /></div>
       <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <StripIcon color={color} on={on} size={50} iconSize={44} icons={icons} longPressProps={longPress} />
       </div>
@@ -118,9 +124,9 @@ export default function TiraLED({ size, config, onConfigChange, accentColor }) {
   );
 
   if (size === '2x1') return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'10px 12px' }}>
+    <div style={{ height:'100%', display:'flex', flexDirection:'column', justifyContent:'space-between', padding:'4px 12px 10px 12px' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <StripIcon color={color} on={on} size={28} iconSize={13} icons={icons} longPressProps={longPress} />
+        <StripIcon color={color} on={on} size={44} iconSize={32} icons={icons} longPressProps={longPress} />
         <div style={{ flex:1, minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
         <Toggle on={on} onToggle={toggle} />
       </div>
@@ -131,7 +137,7 @@ export default function TiraLED({ size, config, onConfigChange, accentColor }) {
         ))}
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-        <span style={{ fontSize:10, color:'var(--text-secondary)', flexShrink:0 }}>{brightness}%</span>
+        <span style={{ fontSize:12, color:'var(--text-secondary)', flexShrink:0 }}>{brightness}%</span>
         <Slider value={brightness} onChange={setBrightness} showVal={false} />
       </div>
       {modal && <TiraLEDModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
@@ -141,16 +147,12 @@ export default function TiraLED({ size, config, onConfigChange, accentColor }) {
   // 2x2
   return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">✨ Tira LED</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={on} onToggle={toggle} />
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <StripIcon color={color} on={on} size={36} iconSize={18} icons={icons} longPressProps={longPress} />
-        <div>
-          <div className="w-name">{name}</div>
-          <div style={{ fontSize:10, color, fontFamily:'monospace' }}>{color}</div>
-        </div>
+        <StripIcon color={color} on={on} size={64} iconSize={42} icons={icons} longPressProps={longPress} />
+        <div className="w-name-lg">{name}</div>
       </div>
       {/* 6 preset dots */}
       <div style={{ display:'flex', gap:6, justifyContent:'space-between', flex:1, alignItems:'center' }}>
@@ -159,9 +161,10 @@ export default function TiraLED({ size, config, onConfigChange, accentColor }) {
             onClick={e => { e.stopPropagation(); setColor(c); }} onMouseDown={e => e.stopPropagation()} />
         ))}
       </div>
-      <div style={{ fontSize:9, color:'var(--text-secondary)', marginBottom:4 }}>Brillo · {brightness}%</div>
+      <div style={{ fontSize:12, color:'var(--text-secondary)', marginBottom:4 }}>Brillo · {brightness}%</div>
       <Slider value={brightness} onChange={setBrightness} showVal={false} />
       {modal && <TiraLEDModal config={config} onConfigChange={onConfigChange} onClose={() => setModal(false)} />}
     </div>
   );
 }
+

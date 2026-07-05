@@ -256,10 +256,11 @@ export default function Alarma({ size, config, onConfigChange, accentColor }) {
   );
 
   if (size === '1x1') return (
-    <div className="w-body" style={{ justifyContent:'space-between', alignItems:'center', gap:0 }}>
-      <div style={{ fontSize:11, color:'var(--text-secondary)', width:'100%', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{name}</div>
-      <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggleArm(); }} {...longPress}><SvgIcon id={triggered ? icons.triggered : armed ? icons.armed : icons.disarmed} size={44} color={armed ? 'var(--icon-on)' : 'var(--icon-off)'} className={armed ? 'icon-glow' : ''} /></span>
-      <span style={{ fontSize:11, color:'var(--text-primary)', transition:'color 0.2s' }}>{armed ? 'Armada' : 'OFF'}</span>
+    <div className="w-body" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+        <span style={{ cursor:'pointer', userSelect:'none' }} onClick={e => { e.stopPropagation(); toggleArm(); }} {...longPress}><SvgIcon id={triggered ? icons.triggered : armed ? icons.armed : icons.disarmed} size={44} color={armed ? 'var(--icon-on)' : 'var(--icon-off)'} className={armed ? 'icon-glow' : ''} /></span>
+        <span style={{ fontSize:12, color:'var(--text-primary)', transition:'color 0.2s' }}>{armed ? 'Armada' : 'OFF'}</span>
+      </div>
       {PinModalEl}
       {ModalEl}
     </div>
@@ -268,15 +269,14 @@ export default function Alarma({ size, config, onConfigChange, accentColor }) {
   return (
     <div className="w-body">
       <div className="w-row">
-        <div className="w-label">🚨 Alarma</div>
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          <div style={{ width:8, height:8, borderRadius:'50%', background:col, boxShadow:armed||triggered?`0 0 8px ${col}`:'none', flexShrink:0 }} />
-          <span style={{ fontSize:10, color:'var(--text-primary)' }}>{armed ? 'Armada' : 'OFF'}</span>
+        <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
+        <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+          <div style={{ width:8, height:8, borderRadius:'50%', background:col, boxShadow:armed||triggered?`0 0 8px ${col}`:'none' }} />
+          <span style={{ fontSize:12, color:'var(--text-primary)' }}>{armed ? 'Armada' : 'OFF'}</span>
         </div>
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:4 }}>
         <div style={{ cursor:'pointer' }} {...longPress}><SvgIcon id={triggered ? icons.triggered : armed ? icons.armed : icons.disarmed} size={48} color={armed ? 'var(--icon-on)' : 'var(--icon-off)'} className={armed ? 'icon-glow' : ''} /></div>
-        <div className="w-name">{name}</div>
         <div className="w-status" style={{ color:'var(--text-primary)', fontWeight:triggered ? 700 : 400 }}>{label}</div>
       </div>
       <button

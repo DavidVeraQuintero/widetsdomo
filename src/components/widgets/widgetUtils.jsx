@@ -8,31 +8,19 @@ export function useLongPress(onLongPress, delay = 500) {
   const timer = useRef(null);
   const pos = useRef(null);
   return {
-    onMouseDown: (e) => {
+    onPointerDown: (e) => {
       pos.current = { x: e.clientX, y: e.clientY };
       timer.current = setTimeout(onLongPress, delay);
     },
-    onMouseMove: (e) => {
+    onPointerMove: (e) => {
       if (pos.current) {
         const dx = Math.abs(e.clientX - pos.current.x);
         const dy = Math.abs(e.clientY - pos.current.y);
         if (dx > 5 || dy > 5) clearTimeout(timer.current);
       }
     },
-    onMouseUp: () => clearTimeout(timer.current),
-    onMouseLeave: () => clearTimeout(timer.current),
-    onTouchStart: (e) => {
-      pos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      timer.current = setTimeout(onLongPress, delay);
-    },
-    onTouchMove: (e) => {
-      if (pos.current) {
-        const dx = Math.abs(e.touches[0].clientX - pos.current.x);
-        const dy = Math.abs(e.touches[0].clientY - pos.current.y);
-        if (dx > 5 || dy > 5) clearTimeout(timer.current);
-      }
-    },
-    onTouchEnd: () => clearTimeout(timer.current),
+    onPointerUp: () => clearTimeout(timer.current),
+    onPointerLeave: () => clearTimeout(timer.current),
   };
 }
 
@@ -85,23 +73,33 @@ export function IconSection({ typeId, config, onConfigChange, resolvedIcons }) {
   );
 }
 
-export function ModalBase({ title, headerRight, onClose, borderColor = 'rgba(255,255,255,0.3)', children }) {
+export function ModalBase({ title, headerRight, onClose, borderColor = 'rgba(255,255,255,0.3)', children, containerStyle }) {
   return createPortal(
     <div
-      style={{ position:'fixed', inset:0, zIndex:9000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)' }}
+      style={{ position:'fixed', inset:0, zIndex:9000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)', animation:'fadeIn 200ms ease' }}
       onMouseDown={e => { e.stopPropagation(); onClose(); }}
     >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
       <div
-        style={{ background:'linear-gradient(135deg,#0f172a,#0a1f3d)', border:`1px solid ${borderColor}`, borderRadius:16, padding:22, width:280, boxShadow:`0 0 40px rgba(0,0,0,0.5), 0 20px 60px rgba(0,0,0,0.6)`, maxHeight:'85vh', overflowY:'auto' }}
+        style={{ background:'linear-gradient(135deg,#0f172a,#0a1f3d)', border:`1px solid ${borderColor}`, borderRadius:'1rem', padding:'1.57rem', width:'20rem', boxShadow:`0 0 40px rgba(0,0,0,0.5), 0 20px 60px rgba(0,0,0,0.6)`, maxHeight:'85vh', overflowY:'auto', animation:'slideUp 200ms ease', ...containerStyle }}
         onMouseDown={e => e.stopPropagation()}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-          <div style={{ color:'#e2e8f0', fontWeight:700, fontSize:14 }}>{title}</div>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.14rem' }}>
+          <div style={{ color:'#e2e8f0', fontWeight:700, fontSize:'1rem' }}>{title}</div>
           {headerRight}
         </div>
         {children}
-        <div style={{ textAlign:'center', marginTop:14, fontSize:10, color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+        <div style={{ textAlign:'center', marginTop:'1rem', fontSize:'0.71rem', color:'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
       </div>
     </div>,
     document.body

@@ -1,6 +1,7 @@
 // src/components/widgets/Notas.jsx
 import { useState } from 'react';
 import { useLongPress, ModalBase } from './widgetUtils';
+import SvgIcon from './SvgIcon';
 
 /* ─── Paleta de colores tipo papel ─── */
 const NOTE_COLORS = [
@@ -26,7 +27,7 @@ function getColorDef(id) {
 function ColorPicker({ value, onChange }) {
   return (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.8 }}>
         Color de nota
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -67,7 +68,7 @@ function NotasModal({ note, onSave, onDelete = () => {}, onClose, accentColor })
 
   return (
     <ModalBase
-      title={isNew ? '📝 Nueva nota' : '📝 Editar nota'}
+      title={isNew ? 'Nueva nota' : 'Editar nota'}
       onClose={onClose}
       borderColor={accentColor}
     >
@@ -79,7 +80,7 @@ function NotasModal({ note, onSave, onDelete = () => {}, onClose, accentColor })
         marginBottom: 12,
         borderLeft: `3px solid ${col.margin.replace('0.2)', '0.7)').replace('0.3)', '0.7)')}`,
         minHeight: 28,
-        fontSize: 11,
+        fontSize: 12,
         color: col.text,
         fontWeight: title ? 600 : 400,
         opacity: title ? 1 : 0.5,
@@ -197,10 +198,10 @@ function NoteCounter({ total, current, accentColor }) {
             transition: 'all 200ms ease',
           }} />
         ))}
-        {total > 6 && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', marginLeft: 1 }}>…</div>}
+        {total > 6 && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginLeft: 1 }}>…</div>}
       </div>
       <div style={{
-        fontSize: 10, fontWeight: 700, color: accentColor,
+        fontSize: 12, fontWeight: 700, color: accentColor,
         background: `${accentColor}18`, borderRadius: 6, padding: '1px 7px',
         letterSpacing: 0.3, whiteSpace: 'nowrap',
       }}>
@@ -220,8 +221,8 @@ function NotePaper({ note, style: extraStyle, showBody = true, longPressProps = 
         position: 'absolute',
         zIndex: 10,
         background: `linear-gradient(160deg, ${col.bg[0]} 0%, ${col.bg[1]} 100%)`,
-        borderRadius: 12,
-        padding: '14px 14px 10px',
+        borderRadius: '0.85rem',
+        padding: '1rem 1rem 0.71rem',
         boxShadow: '-4px 6px 18px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.2)',
         overflow: 'hidden',
         cursor: 'pointer',
@@ -234,7 +235,7 @@ function NotePaper({ note, style: extraStyle, showBody = true, longPressProps = 
       {...longPressProps}
     >
       {/* Líneas de fondo */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: 12 }}>
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', borderRadius: '0.85rem' }}>
         {Array.from({ length: 14 }, (_, i) => (
           <div key={i} style={{
             position: 'absolute', left: 0, right: 0,
@@ -251,9 +252,9 @@ function NotePaper({ note, style: extraStyle, showBody = true, longPressProps = 
 
       {/* Título */}
       <div style={{
-        fontSize: 13, fontWeight: 800, color: col.text,
-        marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap', paddingLeft: 28, flexShrink: 0,
+        fontSize: '0.92rem', fontWeight: 800, color: col.text,
+        marginBottom: '0.57rem', overflow: 'hidden', textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap', paddingLeft: '2rem', flexShrink: 0,
       }}>
         {note.title}
       </div>
@@ -261,8 +262,8 @@ function NotePaper({ note, style: extraStyle, showBody = true, longPressProps = 
       {/* Cuerpo */}
       {showBody && (
         <div style={{
-          flex: 1, fontSize: 11, color: col.sub,
-          lineHeight: 1.65, whiteSpace: 'pre-line', overflow: 'hidden', paddingLeft: 28,
+          flex: 1, fontSize: 12, color: col.sub,
+          lineHeight: 1.65, whiteSpace: 'pre-line', overflow: 'hidden', paddingLeft: '2rem',
         }}>
           {note.body || <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Sin contenido</span>}
         </div>
@@ -270,7 +271,7 @@ function NotePaper({ note, style: extraStyle, showBody = true, longPressProps = 
 
       {/* Fecha */}
       <div style={{
-        fontSize: 8, color: col.sub, marginTop: 6,
+        fontSize: 12, color: col.sub, marginTop: '0.42rem',
         textAlign: 'right', flexShrink: 0, opacity: 0.7,
       }}>
         {new Date(note.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -344,11 +345,12 @@ export default function Notas({ size, config, onConfigChange, accentColor }) {
 
   /* ── Header ── */
   const header = (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexShrink: 0 }}>
-      <div style={{ fontSize: 9, color: accentColor, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-        📝 {name}
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.57rem', flexShrink: 0 }}>
+      <div style={{ fontSize: 12, color: accentColor, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <SvgIcon id="note" size={14} color={accentColor} />
+        {name}
         {notes.length > 0 && (
-          <span style={{ background: `${accentColor}28`, color: accentColor, borderRadius: 8, padding: '1px 5px', fontSize: 8, fontWeight: 700 }}>
+          <span style={{ background: `${accentColor}28`, color: accentColor, borderRadius: '0.57rem', padding: '0.07rem 0.35rem', fontSize: 12, fontWeight: 700 }}>
             {realIdx + 1}/{notes.length}
           </span>
         )}
@@ -374,11 +376,11 @@ export default function Notas({ size, config, onConfigChange, accentColor }) {
   /* ── Barra de navegación ── */
   const navBar = notes.length > 1 && (
     <div
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginTop: 4, flexShrink: 0 }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.28rem', marginTop: '0.28rem', flexShrink: 0 }}
       onMouseDown={stop} onClick={stop}
     >
       <button className="w-btn" onClick={e => { stop(e); navigate('left'); }} onMouseDown={stop}
-        style={{ fontSize: size === '1x2' ? 12 : 16, padding: size === '1x2' ? '2px 8px' : '2px 12px', lineHeight: 1, flexShrink: 0 }}>
+        style={{ fontSize: size === '1x2' ? '0.85rem' : '1.14rem', padding: size === '1x2' ? '0.14rem 0.57rem' : '0.14rem 0.85rem', lineHeight: 1, flexShrink: 0 }}>
         ‹
       </button>
       <NoteCounter total={notes.length} current={realIdx} accentColor={accentColor} />
@@ -395,8 +397,8 @@ export default function Notas({ size, config, onConfigChange, accentColor }) {
       <div className="w-body" style={{ gap: 0 }}>
         {header}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--text-dim)' }}>
-          <div style={{ fontSize: 28, opacity: 0.3 }}>📝</div>
-          <div style={{ fontSize: 10 }}>Sin notas · toca + para crear</div>
+          <SvgIcon id="note" size={28} color="rgba(255,255,255,0.3)" />
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Sin notas · toca + para crear</div>
         </div>
         {modalEl}
       </div>
@@ -431,10 +433,10 @@ export default function Notas({ size, config, onConfigChange, accentColor }) {
             }}
             {...longPress}
           >
-            <div style={{ fontSize: 10, fontWeight: 700, color: col.text, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: col.text, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeNote.title}
             </div>
-            <div style={{ fontSize: 9, color: col.sub, lineHeight: 1.4, whiteSpace: 'pre-line', overflow: 'hidden' }}>
+            <div style={{ fontSize: 12, color: col.sub, lineHeight: 1.4, whiteSpace: 'pre-line', overflow: 'hidden' }}>
               {activeNote.body}
             </div>
           </div>

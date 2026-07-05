@@ -51,24 +51,24 @@ export default function CamaraIP({ size, config, onConfigChange, accentColor }) 
 
   if (size === '2x2') return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">📹 Cámara IP</div>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={recording} onToggle={toggle} />
       </div>
-      <div className="w-name">{name}</div>
-      <div style={{ cursor:'pointer' }} {...longPress}><Preview h={90} /></div>
+      <div style={{ cursor:'pointer', flex:1, display:'flex', flexDirection:'column' }} {...longPress}><Preview h="100%" /></div>
       {Modal}
     </div>
   );
 
   return (
     <div className="w-body">
-      <div className="w-row">
-        <div className="w-label">📹 Cámara IP</div>
+      <div className="w-name" style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', minWidth:0 }}>{name}</div>
+      <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}>
         <Toggle on={recording} onToggle={toggle} />
       </div>
-      <div className="w-name">{name}</div>
-      <div style={{ cursor:'pointer' }} {...longPress}><Preview h={240} /></div>
+      <div style={{ cursor:'pointer', flex:1, display:'flex', flexDirection:'column' }} {...longPress}>
+        <Preview h="100%" />
+      </div>
       <div className="w-row">
         <div className="w-status" style={{ color:'var(--text-primary)' }}>{recording ? '● Grabando' : '○ Standby'}</div>
         <button className="w-btn w-btn-sm" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>📸 Captura</button>

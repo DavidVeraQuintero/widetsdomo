@@ -105,7 +105,7 @@ function MonthModal({ onClose, accentColor }) {
         {/* Day-of-week headers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 4 }}>
           {['L','M','X','J','V','S','D'].map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-secondary)', paddingBottom: 2 }}>{d}</div>
+            <div key={d} style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', paddingBottom: 2 }}>{d}</div>
           ))}
         </div>
 
@@ -123,16 +123,21 @@ function MonthModal({ onClose, accentColor }) {
                 onMouseDown={stop}
                 onClick={() => setSelectedDay(iso)}
                 style={{
-                  textAlign: 'center', cursor: 'pointer', borderRadius: 5, padding: '3px 0',
+                  textAlign: 'center', cursor: 'pointer', borderRadius: '0.35rem', padding: '0.21rem 0',
+                  minHeight: '1.43rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
                   background: isSelected ? accentColor : isToday ? 'rgba(255,255,255,0.1)' : 'transparent',
                   color: isSelected ? '#fff' : isToday ? accentColor : 'var(--text-primary)',
                   fontWeight: isToday || isSelected ? 700 : 400,
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
               >
                 {day}
                 {hasEvents && (
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? '#fff' : accentColor, margin: '1px auto 0' }} />
+                  <div style={{ width: '0.28rem', height: '0.28rem', borderRadius: '50%', background: isSelected ? '#fff' : accentColor, margin: '0.07rem auto 0' }} />
                 )}
               </div>
             );
@@ -142,13 +147,13 @@ function MonthModal({ onClose, accentColor }) {
         {/* Selected day events */}
         <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
               {DAY_NAMES[selParts.weekday]} {selParts.day} {MONTH_SHORT[selParts.month]}
             </span>
             <button className="w-btn w-btn-sm" onMouseDown={stop} onClick={() => setCreating(true)}>+ Añadir</button>
           </div>
           {selectedEvents.length === 0 && (
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center', padding: '8px 0' }}>Sin eventos</div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', padding: '8px 0' }}>Sin eventos</div>
           )}
           {selectedEvents.map(ev => {
             const evColor = ev.isGoogle ? ev.accountColor : accentColor;
@@ -160,7 +165,7 @@ function MonthModal({ onClose, accentColor }) {
                 style={{ borderLeft: `3px solid ${evColor}`, padding: '4px 8px', marginBottom: 6, cursor: ev.isGoogle ? 'default' : 'pointer', borderRadius: '0 4px 4px 0', background: 'rgba(255,255,255,0.05)' }}
               >
                 <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{ev.title}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                   {ev.startTime} · {formatDuration(ev.duration)}
                   {ev.isGoogle && <span style={{ marginLeft: 6, opacity: 0.5 }}>☁️ Google</span>}
                 </div>
@@ -169,7 +174,7 @@ function MonthModal({ onClose, accentColor }) {
           })}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 10, color: 'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
+        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Clic fuera para cerrar</div>
       </div>
     </div>,
     document.body
@@ -196,7 +201,7 @@ export default function CalendarioMini({ accentColor }) {
         background: headerColor,
         color: '#fff',
         textAlign: 'center',
-        fontSize: 9,
+        fontSize: 12,
         fontWeight: 800,
         textTransform: 'uppercase',
         letterSpacing: 2,
@@ -215,9 +220,9 @@ export default function CalendarioMini({ accentColor }) {
         }}>
           {day}
         </div>
-        <div style={{ 
-          fontSize: 10, color: 'var(--text-secondary)', fontWeight: 700, 
-          textTransform: 'uppercase', letterSpacing: 1, marginTop: 3 
+        <div style={{
+          fontSize: 12, color: '#ffffff', fontWeight: 700,
+          textTransform: 'uppercase', letterSpacing: 1, marginTop: 3
         }}>
           {MONTH_SHORT[month]} {year}
         </div>

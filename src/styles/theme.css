@@ -1,3 +1,22 @@
+/* RESPONSIVE REM BASE - scales all rem units */
+@media (min-width: 1024px) {
+  :root {
+    font-size: 14px; /* Desktop: baseline 14px */
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    font-size: 12px; /* Tablet: baseline 12px */
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    font-size: 10px; /* Mobile: baseline 10px */
+  }
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -6,8 +25,8 @@
   --bg-widget:        #0f172a;
   --border:           #1e3a5f;
   --border-accent:    #3b82f6;
-  --text-primary:     #e2e8f0;
-  --text-secondary:   rgba(255,255,255,0.80);
+  --text-primary:     #ffffff;
+  --text-secondary:   #ffffff;
   --text-dim:         #475569;
   --accent:           #3b82f6;
   --accent-dim:       #1e3a5f;
@@ -15,7 +34,7 @@
   --danger:           #ef4444;
   --warning:          #f59e0b;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 body {
@@ -45,7 +64,7 @@ body {
 
 /* Rooms */
 :root[data-room="sala"]       { --bg-photo: url('https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=80'); }
-:root[data-room="dormitorio"] { --bg-photo: url('https://images.unsplash.com/photo-1560448204-603b3fc33dfc?w=1200&q=80'); }
+:root[data-room="dormitorio"] { --bg-photo: url('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1920&q=80'); }
 :root[data-room="cocina"]     { --bg-photo: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80'); }
 :root[data-room="jardin"]     { --bg-photo: url('https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&q=80'); }
 
@@ -63,6 +82,29 @@ body {
 
 /* ── Icon states ── */
 :root {
-  --icon-off: rgba(255, 255, 255, 0.55);
-  --icon-on:  rgba(255, 255, 255, 0.95);
+  --icon-off: #d1d5db;
+  --icon-on:  #ffffff;
+}
+
+/* NOTE: Mobile font sizes are defined in responsive.css via root font-size REM base scaling */
+
+/* ── Alarm animations ── */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes bat-charge {
+  0%, 100% { opacity: 0.12; }
+  40%, 60% { opacity: 0.95; }
 }

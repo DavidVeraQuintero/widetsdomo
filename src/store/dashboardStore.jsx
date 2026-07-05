@@ -1,4 +1,6 @@
 import { createContext, useContext, useReducer } from 'react';
+import { WIDGET_SIZES, CELL_SIZE } from '../catalog/widgetSizes';
+import { calculateCompactLayout, restoreOriginalPositions } from '../utils/compactModeUtils';
 
 const DEFAULT_STORAGE_KEY = 'domotica-v1';
 
@@ -38,6 +40,38 @@ function persist(state, storageKey) {
   }));
 }
 
+// Helper: Clamp position to dashboard bounds
+function clampWidgetPosition(x, y, widgetSize, gridCols, gridRows) {
+  const dashboardWidth = gridCols * CELL_SIZE;
+  const dashboardHeight = gridRows * CELL_SIZE;
+  const size = WIDGET_SIZES[widgetSize] || WIDGET_SIZES['2x2'];
+
+  const maxX = Math.max(0, dashboardWidth - size.width);
+  const maxY = Math.max(0, dashboardHeight - size.height);
+
+  return {
+    x: Math.max(0, Math.min(x, maxX)),
+    y: Math.max(0, Math.min(y, maxY)),
+  };
+}
+
+// Helper: Check if widget fits in grid
+function widgetFitsInGrid(widget, gridCols, gridRows) {
+  const dashboardWidth = gridCols * CELL_SIZE;
+  const dashboardHeight = gridRows * CELL_SIZE;
+  const size = WIDGET_SIZES[widget.size] || WIDGET_SIZES['2x2'];
+
+  return (
+    widget.x + size.width <= dashboardWidth &&
+    widget.y + size.height <= dashboardHeight
+  );
+}
+
+// Helper: Check if all widgets fit in new grid
+function allWidgetsFitInGrid(widgets, gridCols, gridRows) {
+  return widgets.every(w => widgetFitsInGrid(w, gridCols, gridRows));
+}
+
 export function reducer(state, action, storageKey = DEFAULT_STORAGE_KEY) {
   switch (action.type) {
     case 'ADD_WIDGET': {
@@ -50,16 +84,53 @@ export function reducer(state, action, storageKey = DEFAULT_STORAGE_KEY) {
       return next;
     }
     case 'MOVE_WIDGET': {
+      const widget = state.widgets.find(w => w.id === action.id);
+      if (!widget) return state;
+
+      // Clamp position to dashboard bounds
+      const clamped = clampWidgetPosition(
+        action.x,
+        action.y,
+        widget.size,
+        state.grid.cols,
+        state.grid.rows
+      );
+
       const next = {
         ...state,
         widgets: state.widgets.map(w =>
-          w.id === action.id ? { ...w, x: action.x, y: action.y } : w
+          w.id === action.id ? { ...w, x: clamped.x, y: clamped.y } : w
         ),
       };
       persist(next, storageKey);
       return next;
     }
     case 'RESIZE_WIDGET': {
+      const widget = state.widgets.find(w => w.id === action.id);
+      if (!widget) return state;
+
+      // Check if new size fits in dashboard
+      const testWidget = { ...widget, size: action.size };
+      if (!widgetFitsInGrid(testWidget, state.grid.cols, state.grid.rows)) {
+        // If widget doesn't fit, clamp its position to the new size
+        const clamped = clampWidgetPosition(
+          widget.x,
+          widget.y,
+          action.size,
+          state.grid.cols,
+          state.grid.rows
+        );
+
+        const next = {
+          ...state,
+          widgets: state.widgets.map(w =>
+            w.id === action.id ? { ...w, size: action.size, x: clamped.x, y: clamped.y } : w
+          ),
+        };
+        persist(next, storageKey);
+        return next;
+      }
+
       const next = {
         ...state,
         widgets: state.widgets.map(w =>
@@ -162,6 +233,36 @@ export function reducer(state, action, storageKey = DEFAULT_STORAGE_KEY) {
       persist(next, storageKey);
       return next;
     }
+    case 'EJECT_FROM_GROUP': {
+      const { groupId, childId } = action;
+      const group = state.widgets.find(w => w.id === groupId);
+      if (!group) return state;
+      const child = (group.config.children || []).find(c => c.id === childId);
+      if (!child) return state;
+      const size = WIDGET_SIZES[child.size] || WIDGET_SIZES['2x2'];
+      const ejected = {
+        id: child.id,
+        type: child.type,
+        size: child.size,
+        config: { ...child.config },
+        x: group.x + size.width + 16,
+        y: group.y,
+      };
+      const next = {
+        ...state,
+        widgets: [
+          ...state.widgets.map(w =>
+            w.id !== groupId ? w : {
+              ...w,
+              config: { ...w.config, children: (w.config.children || []).filter(c => c.id !== childId) },
+            }
+          ),
+          ejected,
+        ],
+      };
+      persist(next, storageKey);
+      return next;
+    }
     case 'SELECT_WIDGET':
       return { ...state, selectedId: action.id };
     case 'CLEAR_CANVAS': {
@@ -217,16 +318,110 @@ export function reducer(state, action, storageKey = DEFAULT_STORAGE_KEY) {
       return next;
     }
     case 'SET_GRID': {
-      const next = { ...state, grid: { ...state.grid, ...action.patch } };
+      const newGrid = { ...state.grid, ...action.patch };
+
+      // Solo validar si está DISMINUYENDO el grid (aumentar siempre está permitido)
+      const isDecreasing = (action.patch.cols && action.patch.cols < state.grid.cols) ||
+                          (action.patch.rows && action.patch.rows < state.grid.rows);
+
+      if (isDecreasing && !allWidgetsFitInGrid(state.widgets, newGrid.cols, newGrid.rows)) {
+        return state; // Rechazar disminución si widgets no cabrían
+      }
+
+      const next = { ...state, grid: newGrid };
       persist(next, storageKey);
       return next;
+    }
+    case 'APPLY_COMPACT_MODE': {
+      // Reorganizar widgets respetando su tamaño real
+      const cols = 4;
+      const cellWidth = 110; // Tamaño que funciona bien
+      const padding = 12;
+      const maxWidth = (cols * cellWidth) + ((cols - 1) * padding); // 4*110 + 3*12 = 476px
+
+      // Ordenar por posición original
+      const sorted = [...state.widgets].sort((a, b) => {
+        if (a.y !== b.y) return a.y - b.y;
+        return a.x - b.x;
+      });
+
+      // Obtener dimensiones reales de widgets
+      const getWidgetSize = (widget) => {
+        const sizeMap = {
+          '1x1': { width: 90,  height: 90 },
+          '1x2': { width: 90,  height: 185 },
+          '2x1': { width: 185, height: 90 },
+          '2x2': { width: 185, height: 185 },
+          '2x4': { width: 185, height: 390 },
+          '4x2': { width: 390, height: 185 },
+          '4x4': { width: 390, height: 390 },
+          '4x6': { width: 390, height: 595 },
+          '2x6': { width: 185, height: 595 },
+          '2x8': { width: 185, height: 800 },
+        };
+        return sizeMap[widget.size] || { width: 185, height: 185 };
+      };
+
+      // Reorganizar respetando anchos reales
+      const reorganized = [];
+      let currentX = padding;
+      let currentY = padding;
+      let rowHeight = 0;
+
+      sorted.forEach(widget => {
+        const size = getWidgetSize(widget);
+        const widgetWithPadding = size.width + padding;
+
+        // Si no cabe, ir a siguiente fila
+        if (currentX + widgetWithPadding > maxWidth && currentX > padding) {
+          currentY += rowHeight + padding;
+          currentX = padding;
+          rowHeight = 0;
+        }
+
+        reorganized.push({
+          ...widget,
+          originalX: widget.x,
+          originalY: widget.y,
+          x: Math.round(currentX),
+          y: Math.round(currentY),
+        });
+
+        currentX += widgetWithPadding;
+        rowHeight = Math.max(rowHeight, size.height);
+      });
+
+      const next = {
+        ...state,
+        widgets: reorganized,
+        grid: { ...state.grid, cols: 4 },
+      };
+      persist(next, storageKey);
+      return next;
+    }
+    case 'RESTORE_ORIGINAL_POSITIONS': {
+      const restored = restoreOriginalPositions(state.widgets);
+      const next = {
+        ...state,
+        widgets: restored.map(w => {
+          const { originalX, originalY, ...rest } = w;
+          return rest;
+        }),
+        grid: { ...state.grid, cols: 12 },
+      };
+      persist(next, storageKey);
+      return next;
+    }
+    case 'SET_STATE': {
+      persist(action.payload, storageKey);
+      return action.payload;
     }
     default:
       return state;
   }
 }
 
-const DashboardContext = createContext(null);
+export const DashboardContext = createContext(null);
 
 export function DashboardProvider({ children, storageKey = DEFAULT_STORAGE_KEY }) {
   const [state, dispatch] = useReducer(

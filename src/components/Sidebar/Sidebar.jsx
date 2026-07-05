@@ -3,7 +3,7 @@ import { WIDGET_CATALOG } from '../../catalog/widgetCatalog.jsx';
 import WidgetItem from './WidgetItem';
 import styles from './Sidebar.module.css';
 
-export default function Sidebar() {
+export default function Sidebar({ onAddWidget }) {
   const [search, setSearch] = useState('');
 
   const filtered = search.trim()
@@ -30,7 +30,7 @@ export default function Sidebar() {
           return (
             <div key={cat}>
               <div className={styles.category}>{items[0].categoryIcon} {cat}</div>
-              {items.map(def => <WidgetItem key={def.id} def={def} />)}
+              {items.map(def => <WidgetItem key={def.id} def={def} onAddWidget={onAddWidget} />)}
             </div>
           );
         })}
