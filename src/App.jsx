@@ -17,6 +17,7 @@ import { HubProvider, useHub } from './store/hubStore.jsx';
 import Login from './components/Login/Login.jsx';
 import HubsTab from './components/Hubs/HubsTab.jsx';
 import RulesEngine from './rules/rulesEngine.js';
+import HubDeviceSync from './components/Hubs/HubDeviceSync.jsx';
 import { useConnectivity } from './hooks/useConnectivity.js';
 import OfflineModal from './components/Modal/OfflineModal.jsx';
 
@@ -74,6 +75,7 @@ function AppContent({ onLogout }) {
       {mode === 'offline' && <OfflineModal />}
       <ThemeApplier />
       <RulesEngine />
+      <HubDeviceSync />
 
       <div className={styles.shell}>
         {/* ── Hamburger (visible solo cuando sidebar oculto) ─────── */}
