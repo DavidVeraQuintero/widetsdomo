@@ -35,9 +35,9 @@ function applyLiveState(config, live) {
     const ct = live.colorTemperature ? Number(live.colorTemperature) : 4000;
     const whiteColor = ct <= 3200 ? '#ffcc66' : '#ffffff';
     if (config.color !== whiteColor) updates.color = whiteColor;
-  } else if (live.hue !== undefined || live.saturation !== undefined) {
-    const h = (live.hue !== undefined ? Number(live.hue) : 0) / 100 * 360;
-    const s = (live.saturation !== undefined ? Number(live.saturation) : 100) / 100;
+  } else if (live.hue !== undefined && live.saturation !== undefined) {
+    const h = Number(live.hue) / 100 * 360;
+    const s = Number(live.saturation) / 100;
     const hex = hslToHex(h, s, 0.5);
     if (hex !== config.color) updates.color = hex;
   }

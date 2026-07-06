@@ -164,8 +164,12 @@ export async function readDeviceState(hub, deviceId) {
 
 export async function triggerDeviceRefresh(hub, deviceId) {
   if (hub.type !== 'hubitat') return;
+  // Only refresh via direct LAN (no-cors) — cloud path returns 502 for refresh endpoints
+  if (!window.__hubLanReachable || !hub.ip) return;
   const path = `/apps/api/${hub.appId}/devices/${deviceId}/refresh?access_token=${hub.token}`;
-  try { await fetchHubitat(hub, path, 'GET'); } catch { /* not all devices support refresh */ }
+  try {
+    await fetchDirectLocal(hub, path, 'GET', true);
+  } catch { /* not all devices support refresh */ }
 }
 
 export async function sendDeviceCommand(hub, deviceId, command, arg) {
