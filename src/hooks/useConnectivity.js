@@ -15,9 +15,11 @@ export function useConnectivity(hub) {
     let cancelled = false;
 
     async function check() {
+      // On HTTPS (production/Render) the browser can never reach a local IP —
+      // skip the LAN probe entirely to avoid console noise and the "Not Secure" indicator.
+      const isHttps = location.protocol === 'https:';
       const [hasLan, hasInternet] = await Promise.all([
-        // LAN: no-cors ping to hub IP — any response = reachable, no CORS issues
-        hub?.ip
+        hub?.ip && !isHttps
           ? (async () => {
               try {
                 const ctrl = new AbortController();

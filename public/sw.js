@@ -19,6 +19,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
+  // Only handle same-origin requests; skip external (hub IPs, cloud APIs, etc.)
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api') || e.request.headers.get('upgrade') === 'websocket') {
     return;
   }
