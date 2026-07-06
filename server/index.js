@@ -202,3 +202,75 @@ wss.on('connection', async (ws, req) => {
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
+
+// Keep Render free tier alive — ping self every 10 min so the service
+// never reaches the 15-min inactivity threshold that triggers sleep.
+if (process.env.RENDER_EXTERNAL_URL) {
+  const selfUrl = `${process.env.RENDER_EXTERNAL_URL}/api/me`;
+  setInterval(() => {
+    fetch(selfUrl).catch(() => {});
+  }, 10 * 60 * 1000);
+}
+
+// Server-side device state polling — broadcasts DEVICE_EVENT to all WS clients
+// when a device attribute changes. Primary real-time path for mobile clients
+// since Hubitat's Maker API webhook delivery is unreliable.
+const SERVER_POLL_MS = 8_000;
+const _devStates = {};
+const WATCHED_ATTRS = new Set([
+  'contact', 'switch', 'level', 'hue', 'saturation',
+  'colorMode', 'colorTemperature', 'volume', 'muted', 'channel',
+  'presence', 'motion', 'temperature', 'humidity', 'lock', 'door',
+]);
+
+async function pollHubDeviceStates() {
+  let hubData;
+  try { hubData = await getHubs(); } catch { return; }
+  const hubs = hubData?.hubs ?? [];
+
+  for (const hub of hubs) {
+    if (hub.type !== 'hubitat' || !hub.cloudUrl) continue;
+    try {
+      const cloudUrl = new URL(hub.cloudUrl);
+      const token = cloudUrl.searchParams.get('access_token') || hub.token;
+      const basePath = cloudUrl.pathname;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 10_000);
+      let res;
+      try {
+        res = await fetch(
+          `https://cloud.hubitat.com${basePath}/devices/all?access_token=${token}`,
+          { signal: ctrl.signal }
+        );
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!res.ok) continue;
+      const devices = await res.json();
+      if (!Array.isArray(devices)) continue;
+
+      for (const dev of devices) {
+        const deviceId = String(dev.id);
+        const key = `${hub.id}:${deviceId}`;
+        const curr = {};
+        for (const a of (dev.attributes ?? [])) {
+          if (WATCHED_ATTRS.has(a.name) && a.currentValue !== null && a.currentValue !== undefined) {
+            curr[a.name] = a.currentValue;
+          }
+        }
+        const prev = _devStates[key];
+        _devStates[key] = curr;
+        if (!prev) continue; // first run — seed state only, no broadcasts
+        for (const [name, value] of Object.entries(curr)) {
+          if (String(prev[name]) !== String(value)) {
+            broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+          }
+        }
+      }
+    } catch { /* hub unreachable or network error — retry next cycle */ }
+  }
+}
+
+// Seed initial state then broadcast changes every 8s
+pollHubDeviceStates();
+setInterval(pollHubDeviceStates, SERVER_POLL_MS);
