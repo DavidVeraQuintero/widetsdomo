@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 
-const LAN_TIMEOUT_MS   = 1000;
+const LAN_TIMEOUT_MS   = 1200;
 const CLOUD_TIMEOUT_MS = 3000;
 
 // Returns: 'local' | 'cloud' | 'offline'
-// 'local'  — Hubitat reachable on LAN → commands go direct
-// 'cloud'  — internet up but no LAN   → commands go via Render proxy
-// 'offline'— neither reachable        → blocking modal
+// 'local'  — Hubitat responds on LAN via HTTPS → commands go direct, no cloud hop
+// 'cloud'  — internet up but hub not reachable on LAN → commands via cloud.hubitat.com
+// 'offline'— neither reachable                        → blocking modal
+//
+// LAN detection uses https:// (not http://) so it works from HTTPS pages without
+// mixed-content blocking. Hubitat C8/C8 Pro listens on HTTPS locally. The result
+// is cached in window.__hubLanReachable so hubClient can read it synchronously.
 export function useConnectivity(hub) {
   const [mode, setMode] = useState('cloud');
   const timerRef = useRef(null);
@@ -15,15 +19,14 @@ export function useConnectivity(hub) {
     let cancelled = false;
 
     async function check() {
-      // On HTTPS (production/Render) the browser can never reach a local IP —
-      // skip the LAN probe entirely to avoid console noise and the "Not Secure" indicator.
-      const isHttps = location.protocol === 'https:';
       const [hasLan, hasInternet] = await Promise.all([
-        hub?.ip && !isHttps
+        hub?.ip
           ? (async () => {
               try {
                 const ctrl = new AbortController();
                 const t = setTimeout(() => ctrl.abort(), LAN_TIMEOUT_MS);
+                // mode:'no-cors' → opaque response, but any non-throw means hub is up.
+                // Uses HTTPS so no mixed-content warning on the page security indicator.
                 await fetch(`https://${hub.ip}`, { signal: ctrl.signal, mode: 'no-cors' });
                 clearTimeout(t);
                 return true;
@@ -31,7 +34,7 @@ export function useConnectivity(hub) {
             })()
           : Promise.resolve(false),
 
-        // Internet: ping own server
+        // Cloud: ping own server
         (async () => {
           try {
             const ctrl = new AbortController();
@@ -44,6 +47,9 @@ export function useConnectivity(hub) {
       ]);
 
       if (cancelled) return;
+
+      // Expose LAN status globally — hubClient.js reads this without React context
+      window.__hubLanReachable = hasLan;
 
       if (hasLan)           setMode('local');
       else if (hasInternet) setMode('cloud');

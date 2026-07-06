@@ -49,14 +49,16 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
   return await res.json();
 }
 
-// On HTTPS (production) skip LAN attempts — server can't reach local IPs
-// On HTTP (local dev): local direct → server proxy → cloud
+// Local-first: if useConnectivity detected the hub on LAN (window.__hubLanReachable),
+// try a direct HTTPS call to the hub's local IP first — no cloud round-trip.
+// Falls back silently to cloud.hubitat.com if the direct call fails.
 async function fetchHubitat(hub, path, method = 'GET') {
-  const isHttps = window.location.protocol === 'https:';
-
-  if (!isHttps && hub.ip) {
-    try { return await fetchDirectLocal(hub, path, method); } catch { /* fall through */ }
-    try { return await fetchViaProxy(hub, path, method); } catch { /* fall through */ }
+  if (window.__hubLanReachable && hub.ip) {
+    try {
+      return await fetchDirectLocal(hub, path, method);
+    } catch {
+      // Hub was reachable during probe but command failed — fall through to cloud
+    }
   }
 
   if (hub.cloudUrl) {
