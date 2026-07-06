@@ -20,6 +20,7 @@ import RulesEngine from './rules/rulesEngine.js';
 import HubDeviceSync from './components/Hubs/HubDeviceSync.jsx';
 import { useConnectivity } from './hooks/useConnectivity.js';
 import OfflineModal from './components/Modal/OfflineModal.jsx';
+import StatusBar from './components/StatusBar/StatusBar.jsx';
 
 const TABS = [
   { id: 'widgets', icon: '📦', label: 'Widgets' },
@@ -162,6 +163,7 @@ function AppContent({ onLogout }) {
         {/* ── Canvas ─────────────────────────────────────────────── */}
         <div className={styles.canvasArea}>
           <Canvas />
+          <StatusBar mode={mode} />
         </div>
       </div>
     </>

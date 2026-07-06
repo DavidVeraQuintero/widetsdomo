@@ -52,17 +52,20 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
 // Local-first: if useConnectivity detected the hub on LAN (window.__hubLanReachable),
 // try a direct HTTPS call to the hub's local IP first — no cloud round-trip.
 // Falls back silently to cloud.hubitat.com if the direct call fails.
+// Returns { data, via: 'local'|'cloud' } so callers can report which path was used.
 async function fetchHubitat(hub, path, method = 'GET') {
   if (window.__hubLanReachable && hub.ip) {
     try {
-      return await fetchDirectLocal(hub, path, method);
+      const data = await fetchDirectLocal(hub, path, method);
+      return { data, via: 'local' };
     } catch {
       // Hub was reachable during probe but command failed — fall through to cloud
     }
   }
 
   if (hub.cloudUrl) {
-    return await fetchViaCloudProxy(hub, path, method);
+    const data = await fetchViaCloudProxy(hub, path, method);
+    return { data, via: 'cloud' };
   }
   throw new Error('No connection available');
 }
@@ -107,7 +110,8 @@ export async function fetchHubDevices(hub) {
 
   if (hub.type === 'hubitat') {
     const path = `/apps/api/${hub.appId}/devices?access_token=${hub.token}`;
-    raw = await fetchHubitat(hub, path);
+    const { data } = await fetchHubitat(hub, path);
+    raw = data;
     usedProxy = true;
     return { devices: normalizeHubitat(hub.id, hub.name, raw), usedProxy };
   }
@@ -138,7 +142,7 @@ export async function testHubConnection(hub) {
 export async function readDeviceState(hub, deviceId) {
   if (hub.type !== 'hubitat') return {};
   const path = `/apps/api/${hub.appId}/devices/${deviceId}?access_token=${hub.token}`;
-  const data = await fetchHubitat(hub, path);
+  const { data } = await fetchHubitat(hub, path);
   const state = {};
   if (Array.isArray(data?.attributes)) {
     for (const attr of data.attributes) {
@@ -160,7 +164,12 @@ export async function sendDeviceCommand(hub, deviceId, command, arg) {
   if (hub.type !== 'hubitat') return;
   const argPart = arg !== undefined && arg !== null ? `/${encodeURIComponent(arg)}` : '';
   const path = `/apps/api/${hub.appId}/devices/${deviceId}/${command}${argPart}?access_token=${hub.token}`;
-  await fetchHubitat(hub, path, 'POST');
+  const t0 = performance.now();
+  const { via } = await fetchHubitat(hub, path, 'POST');
+  const ms = Math.round(performance.now() - t0);
+  window.dispatchEvent(new CustomEvent('hub:command-sent', {
+    detail: { command, deviceId, via, ms },
+  }));
 }
 
 export async function checkLocalHubReachable(hub) {
