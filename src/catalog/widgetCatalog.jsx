@@ -59,7 +59,7 @@ export const WIDGET_CATALOG = [
   { id: 'humidificador',   category: 'Clima', categoryIcon: '≈', icon: '💧', name: 'Humidificador',      sizes: ['1x1','1x2','2x1'],             defaultConfig: { on: false, name: 'Humidificador', humidity: 50 }, component: Humidificador },
   { id: 'purificador',     category: 'Clima', categoryIcon: '≈', icon: '🌬', name: 'Purificador Aire',   sizes: ['1x1','1x2','2x1','2x2'],       defaultConfig: { on: false, name: 'Purificador', aqi: 25 }, component: PurificadorAire },
   // ── SEGURIDAD ──
-  { id: 'puerta',          category: 'Seguridad', categoryIcon: '◆', icon: '🚪', name: 'Puerta',            sizes: ['1x1','1x2','2x1','2x2'], defaultConfig: { open: false, locked: true, name: 'Puerta' }, component: Puerta },
+  { id: 'puerta',          category: 'Seguridad', categoryIcon: '◆', icon: '🚪', name: 'Puerta',            sizes: ['1x1','1x2','2x1','2x2'], defaultConfig: { open: false, locked: false, name: 'Puerta' }, component: Puerta },
   { id: 'ventana',         category: 'Seguridad', categoryIcon: '◆', icon: '🪟', name: 'Ventana',           sizes: ['1x1','1x2','2x1'],       defaultConfig: { open: false, name: 'Ventana' }, component: Ventana },
   { id: 'cerradura',       category: 'Seguridad', categoryIcon: '◆', icon: '🔒', name: 'Cerradura',         sizes: ['1x1','1x2','2x1'],       defaultConfig: { locked: true, name: 'Cerradura' }, component: CerraduraInteligente },
   { id: 'camara-ip',       category: 'Seguridad', categoryIcon: '◆', icon: '📹', name: 'Cámara IP',         sizes: ['2x2','4x4'],             defaultConfig: { recording: true, name: 'Cámara' }, component: CamaraIP },
