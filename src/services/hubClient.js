@@ -3,11 +3,18 @@ import { HUBITAT_CAP_TO_WIDGETS, HA_DOMAIN_TO_WIDGETS } from './hubMappings.js';
 const LOCAL_TIMEOUT_MS = 1000;
 const PROXY_TIMEOUT_MS = 8000;
 
-async function fetchDirectLocal(hub, path, method = 'GET') {
+// fireAndForget=true uses mode:'no-cors' so the browser skips CORS validation.
+// The hub doesn't send Allow-Origin headers, so regular cross-origin reads fail.
+// For commands (on/off/setLevel) we don't need the response body, so no-cors is fine.
+async function fetchDirectLocal(hub, path, method = 'GET', fireAndForget = false) {
   const url = `https://${hub.ip}${path}`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), LOCAL_TIMEOUT_MS);
   try {
+    if (fireAndForget) {
+      await fetch(url, { method, signal: ctrl.signal, mode: 'no-cors' });
+      return null;
+    }
     const res = await fetch(url, { method, signal: ctrl.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
@@ -53,10 +60,11 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
 // try a direct HTTPS call to the hub's local IP first — no cloud round-trip.
 // Falls back silently to cloud.hubitat.com if the direct call fails.
 // Returns { data, via: 'local'|'cloud' } so callers can report which path was used.
-async function fetchHubitat(hub, path, method = 'GET') {
+// fireAndForget=true skips response reading (used for commands, bypasses CORS check).
+async function fetchHubitat(hub, path, method = 'GET', fireAndForget = false) {
   if (window.__hubLanReachable && hub.ip) {
     try {
-      const data = await fetchDirectLocal(hub, path, method);
+      const data = await fetchDirectLocal(hub, path, method, fireAndForget);
       return { data, via: 'local' };
     } catch {
       // Hub was reachable during probe but command failed — fall through to cloud
@@ -165,7 +173,7 @@ export async function sendDeviceCommand(hub, deviceId, command, arg) {
   const argPart = arg !== undefined && arg !== null ? `/${encodeURIComponent(arg)}` : '';
   const path = `/apps/api/${hub.appId}/devices/${deviceId}/${command}${argPart}?access_token=${hub.token}`;
   const t0 = performance.now();
-  const { via } = await fetchHubitat(hub, path, 'POST');
+  const { via } = await fetchHubitat(hub, path, 'POST', true);
   const ms = Math.round(performance.now() - t0);
   window.dispatchEvent(new CustomEvent('hub:command-sent', {
     detail: { command, deviceId, via, ms },
