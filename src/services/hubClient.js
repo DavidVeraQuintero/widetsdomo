@@ -49,14 +49,16 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
   return await res.json();
 }
 
-// Local first (LAN ~10ms) → Render proxy → cloud Hubitat URL
+// On HTTPS (production) skip LAN attempts — server can't reach local IPs
+// On HTTP (local dev): local direct → server proxy → cloud
 async function fetchHubitat(hub, path, method = 'GET') {
-  if (hub.ip) {
+  const isHttps = window.location.protocol === 'https:';
+
+  if (!isHttps && hub.ip) {
     try { return await fetchDirectLocal(hub, path, method); } catch { /* fall through */ }
-  }
-  if (hub.ip) {
     try { return await fetchViaProxy(hub, path, method); } catch { /* fall through */ }
   }
+
   if (hub.cloudUrl) {
     return await fetchViaCloudProxy(hub, path, method);
   }
