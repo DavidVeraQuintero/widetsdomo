@@ -55,6 +55,8 @@ function hslToHex(h, s, l) {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+const CMD_GRACE_MS = 10_000;
+
 export default function HubDeviceSync() {
   const { hubs, deviceStates, updateDeviceState } = useHub();
   const { state, dispatch } = useDashboard();
@@ -64,6 +66,16 @@ export default function HubDeviceSync() {
 
   const hubsRef = useRef(hubs);
   hubsRef.current = hubs;
+
+  // Track last command sent per deviceId to avoid overwriting optimistic state too soon
+  const lastCmdRef = useRef({});
+  useEffect(() => {
+    const handler = (e) => {
+      lastCmdRef.current[String(e.detail.deviceId)] = Date.now();
+    };
+    window.addEventListener('hub:command-sent', handler);
+    return () => window.removeEventListener('hub:command-sent', handler);
+  }, []);
 
   // Polling: all devices refresh in parallel, single wait, then read in parallel
   useEffect(() => {
@@ -109,13 +121,17 @@ export default function HubDeviceSync() {
   useEffect(() => {
     if (!deviceStates || Object.keys(deviceStates).length === 0) return;
     const { widgets } = stateRef.current;
+    const now = Date.now();
     widgets.forEach(w => {
       if (!w.config?.hubId || !w.config?.deviceId) return;
       const live = deviceStates[`${w.config.hubId}:${w.config.deviceId}`];
       if (!live) return;
 
+      // Skip update during grace period after a command — lets optimistic UI settle
+      const lastCmd = lastCmdRef.current[w.config.deviceId];
+      if (lastCmd && now - lastCmd < CMD_GRACE_MS) return;
+
       const updates = applyLiveState(w.config, live);
-      console.log('[HubSync] widget', w.id, 'live=', live, 'updates=', updates);
       if (Object.keys(updates).length === 0) return;
 
       dispatch({ type: 'UPDATE_CONFIG', id: w.id, config: { ...w.config, ...updates } });
