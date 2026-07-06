@@ -27,10 +27,23 @@ async function fetchViaProxy(hub, path, method = 'GET') {
 }
 
 async function fetchViaCloudProxy(hub, path, method = 'GET') {
+  if (!hub.cloudUrl) throw new Error('No cloudUrl configured');
+
+  // cloudUrl: https://cloud.hubitat.com/api/{hub-uuid}/apps/{appId}?access_token=TOKEN
+  const cloudUrlObj = new URL(hub.cloudUrl);
+  const cloudToken = cloudUrlObj.searchParams.get('access_token') || hub.token;
+  const cloudBasePath = cloudUrlObj.pathname; // /api/{hub-uuid}/apps/{appId}
+
+  // Strip local prefix: /apps/api/{appId}/devices/... → /devices/...
+  const localPrefix = `/apps/api/${hub.appId}`;
+  const subPath = path.replace(localPrefix, '').replace(/[?&]access_token=[^&]*/g, '');
+
+  const cloudPath = `${cloudBasePath}${subPath}?access_token=${cloudToken}`;
+
   const res = await fetch('/api/hub-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: hub.type, ip: 'cloud.hubitat.com', appId: hub.appId, token: hub.token, path, method }),
+    body: JSON.stringify({ type: hub.type, ip: 'cloud.hubitat.com', token: cloudToken, path: cloudPath, method }),
   });
   if (!res.ok) throw new Error(`Cloud proxy HTTP ${res.status}`);
   return await res.json();
