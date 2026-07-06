@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useHub } from '../../store/hubStore.jsx';
 import { useDashboard } from '../../store/dashboardStore.jsx';
 import { triggerDeviceRefresh, readDeviceState } from '../../services/hubClient.js';
+
+const CMD_GRACE_MS = 10_000;
+const POLL_MS = 60_000;
+const LAN_WS_RECONNECT_MS = 30_000;
 
 function applyLiveState(config, live) {
   const updates = {};
@@ -10,7 +14,6 @@ function applyLiveState(config, live) {
     const isOpen = live.contact === 'open';
     if (isOpen !== (config.open ?? false)) updates.open = isOpen;
   }
-
   if (live.switch !== undefined) {
     const liveOn = live.switch === 'on';
     if (liveOn !== (config.on ?? false)) updates.on = liveOn;
@@ -55,19 +58,16 @@ function hslToHex(h, s, l) {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-const CMD_GRACE_MS = 10_000;
-
 export default function HubDeviceSync() {
-  const { hubs, deviceStates, updateDeviceState } = useHub();
+  const { hubs, updateDeviceState } = useHub();
   const { state, dispatch } = useDashboard();
 
   const stateRef = useRef(state);
   stateRef.current = state;
-
   const hubsRef = useRef(hubs);
   hubsRef.current = hubs;
 
-  // Track last command sent per deviceId to avoid overwriting optimistic state too soon
+  // Timestamp per deviceId of last user-initiated command
   const lastCmdRef = useRef({});
   useEffect(() => {
     const handler = (e) => {
@@ -77,7 +77,76 @@ export default function HubDeviceSync() {
     return () => window.removeEventListener('hub:command-sent', handler);
   }, []);
 
-  // Polling: all devices refresh in parallel, single wait, then read in parallel
+  // Apply a live state object to all matching widgets, respecting grace period
+  const applyToWidgets = useCallback((hubId, deviceId, live) => {
+    const now = Date.now();
+    const lastCmd = lastCmdRef.current[String(deviceId)];
+    if (lastCmd && now - lastCmd < CMD_GRACE_MS) return;
+
+    const { widgets } = stateRef.current;
+    for (const w of widgets) {
+      if (w.config?.hubId !== hubId || w.config?.deviceId !== String(deviceId)) continue;
+      const updates = applyLiveState(w.config, live);
+      if (Object.keys(updates).length === 0) continue;
+      dispatch({ type: 'UPDATE_CONFIG', id: w.id, config: { ...w.config, ...updates } });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cloud path: backend WebSocket relays Hubitat webhook events as hub:device-event
+  useEffect(() => {
+    const handler = (e) => {
+      const { hubId, deviceId, attribute, value } = e.detail;
+      applyToWidgets(hubId, deviceId, { [attribute]: value });
+    };
+    window.addEventListener('hub:device-event', handler);
+    return () => window.removeEventListener('hub:device-event', handler);
+  }, [applyToWidgets]);
+
+  // LAN path: direct WebSocket to Hubitat EventSocket (wss://hub.ip/eventsocket)
+  // Works when the user has accepted the hub's self-signed cert in the browser.
+  // Fails silently when not on LAN or cert not trusted — cloud path is the fallback.
+  const hub0Id = hubs[0]?.id;
+  useEffect(() => {
+    const hub = hubsRef.current[0];
+    if (!hub?.ip) return;
+
+    let ws = null;
+    let reconnectTimer = null;
+    let stopped = false;
+
+    function connect() {
+      if (stopped) return;
+      try {
+        ws = new WebSocket(`wss://${hub.ip}/eventsocket`);
+      } catch {
+        return;
+      }
+
+      ws.onmessage = (e) => {
+        try {
+          const evt = JSON.parse(e.data);
+          if (evt.source !== 'DEVICE') return;
+          applyToWidgets(hub.id, String(evt.deviceId), { [evt.name]: evt.value });
+        } catch {}
+      };
+
+      ws.onclose = () => {
+        if (!stopped) reconnectTimer = setTimeout(connect, LAN_WS_RECONNECT_MS);
+      };
+
+      ws.onerror = () => ws?.close();
+    }
+
+    connect();
+    return () => {
+      stopped = true;
+      clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, [hub0Id, applyToWidgets]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fallback polling: initial state load on mount + slow refresh every 60s
+  // Catches any events missed by WebSocket (reconnects, hub restarts, etc.)
   useEffect(() => {
     const poll = async () => {
       const { widgets } = stateRef.current;
@@ -89,54 +158,31 @@ export default function HubDeviceSync() {
         if (seen.has(key)) continue;
         seen.add(key);
         const hub = hubsRef.current.find(h => h.id === w.config.hubId);
-        if (hub?.enabled === false) continue;
+        if (!hub || hub.enabled === false) continue;
         targets.push({ hub, hubId: w.config.hubId, deviceId: w.config.deviceId });
       }
-      if (targets.length === 0) return;
+      if (!targets.length) return;
 
-      // Trigger refresh on all devices simultaneously
-      await Promise.allSettled(targets.map(({ hub, deviceId }) => triggerDeviceRefresh(hub, deviceId)));
-
-      // Single wait for Hubitat to update all device states from physical hardware
+      await Promise.allSettled(
+        targets.map(({ hub, deviceId }) => triggerDeviceRefresh(hub, deviceId))
+      );
       await new Promise(r => setTimeout(r, 1500));
 
-      // Read all updated states simultaneously
       await Promise.allSettled(targets.map(async ({ hub, hubId, deviceId }) => {
         try {
-          const stateData = await readDeviceState(hub, deviceId);
-          console.log('[HubSync] stateData for', deviceId, stateData);
-          if (Object.keys(stateData).length > 0) updateDeviceState(hubId, deviceId, stateData);
-        } catch (err) {
-          console.warn('[HubSync] readDeviceState failed for', deviceId, err.message);
-        }
+          const live = await readDeviceState(hub, deviceId);
+          if (Object.keys(live).length > 0) {
+            updateDeviceState(hubId, deviceId, live);
+            applyToWidgets(hubId, deviceId, live);
+          }
+        } catch {}
       }));
     };
 
     poll();
-    const interval = setInterval(poll, 8000);
+    const interval = setInterval(poll, POLL_MS);
     return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Aplicar cambios en tiempo real a los widgets cuando deviceStates se actualiza
-  useEffect(() => {
-    if (!deviceStates || Object.keys(deviceStates).length === 0) return;
-    const { widgets } = stateRef.current;
-    const now = Date.now();
-    widgets.forEach(w => {
-      if (!w.config?.hubId || !w.config?.deviceId) return;
-      const live = deviceStates[`${w.config.hubId}:${w.config.deviceId}`];
-      if (!live) return;
-
-      // Skip update during grace period after a command — lets optimistic UI settle
-      const lastCmd = lastCmdRef.current[w.config.deviceId];
-      if (lastCmd && now - lastCmd < CMD_GRACE_MS) return;
-
-      const updates = applyLiveState(w.config, live);
-      if (Object.keys(updates).length === 0) return;
-
-      dispatch({ type: 'UPDATE_CONFIG', id: w.id, config: { ...w.config, ...updates } });
-    });
-  }, [deviceStates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }
