@@ -23,6 +23,16 @@ export default function Canvas() {
   const canvasRef = useRef(null);
   const innerRef = useRef(null);
 
+  // Refs so the useDrop closure always reads the latest values (factory captures stale closure)
+  const hubDevicesRef = useRef(hubDevices);
+  hubDevicesRef.current = hubDevices;
+  const assignmentsRef = useRef(assignments);
+  assignmentsRef.current = assignments;
+  const hubsRef = useRef(hubs);
+  hubsRef.current = hubs;
+  const hubsConfiguredRef = useRef(hubsConfigured);
+  hubsConfiguredRef.current = hubsConfigured;
+
   const [dashboardScale, setDashboardScale] = useState(1);
   const [userZoom, setUserZoom] = useState(1);
   const [containerWidth, setContainerWidth] = useState(window.innerWidth);
@@ -174,9 +184,9 @@ export default function Canvas() {
         });
       };
 
-      if (hubsConfigured && HUB_LOCKABLE_WIDGET_TYPES.has(type)) {
-        const allDevsList = Object.values(hubDevices).flat();
-        const matchingDevices = Object.entries(assignments)
+      if (hubsConfiguredRef.current && HUB_LOCKABLE_WIDGET_TYPES.has(type)) {
+        const allDevsList = Object.values(hubDevicesRef.current).flat();
+        const matchingDevices = Object.entries(assignmentsRef.current)
           .filter(([, wt]) => wt === type)
           .map(([key]) => {
             const sep = key.indexOf(':');
@@ -184,7 +194,7 @@ export default function Canvas() {
             const deviceId = key.slice(sep + 1);
             const full = allDevsList.find(d => d.hubId === hubId && d.deviceId === deviceId);
             if (full) return full;
-            const hub = hubs.find(h => h.id === hubId);
+            const hub = hubsRef.current.find(h => h.id === hubId);
             return { hubId, deviceId, name: `Dispositivo ${deviceId}`, hubName: hub?.name ?? '', reachable: true };
           });
         if (matchingDevices.length === 1) {

@@ -20,10 +20,14 @@ export default function WidgetItem({ def, onAddWidget }) {
   const count = deviceCounts[def.id] ?? 0;
   const isLocked = hubsConfigured && isLockable && count === 0;
 
+  // Ref so canDrag always reads the latest isLocked (factory closure is stale)
+  const isLockedRef = useRef(isLocked);
+  isLockedRef.current = isLocked;
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'WIDGET',
     item: { widgetType: def.id, def },
-    canDrag: () => !isLocked,
+    canDrag: () => !isLockedRef.current,
     collect: (monitor) => ({ isDragging: monitor.isDragging() }),
   }));
 
