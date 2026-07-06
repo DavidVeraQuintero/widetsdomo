@@ -1,16 +1,39 @@
 import { useState, useEffect, useRef } from 'react';
 
-const LAN_TIMEOUT_MS   = 1200;
 const CLOUD_TIMEOUT_MS = 3000;
 
+// Detect if local IP is on the same /24 subnet as the hub using WebRTC ICE candidates.
+// This requires NO connection to the hub and NO cert trust — the browser reveals its
+// own local IPs as part of the WebRTC negotiation process.
+async function isOnHubSubnet(hubIp) {
+  if (!hubIp) return false;
+  const hubPrefix = hubIp.split('.').slice(0, 3).join('.'); // e.g. "192.168.11"
+  try {
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    pc.createDataChannel('');
+    await pc.createOffer().then(o => pc.setLocalDescription(o));
+    return new Promise(resolve => {
+      let done = false;
+      const finish = (val) => { if (done) return; done = true; pc.close(); resolve(val); };
+      setTimeout(() => finish(false), 800);
+      pc.onicecandidate = (e) => {
+        if (!e?.candidate?.candidate) return;
+        const m = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+        if (m && m[1].startsWith(hubPrefix + '.')) finish(true);
+      };
+    });
+  } catch { return false; }
+}
+
 // Returns: 'local' | 'cloud' | 'offline'
-// 'local'  — Hubitat responds on LAN via HTTPS → commands go direct, no cloud hop
-// 'cloud'  — internet up but hub not reachable on LAN → commands via cloud.hubitat.com
-// 'offline'— neither reachable                        → blocking modal
+// 'local'  — device is on same /24 as Hubitat → commands attempt LAN first
+// 'cloud'  — internet up, not on hub subnet  → commands via cloud.hubitat.com
+// 'offline'— no internet and not on hub subnet → blocking modal
 //
-// LAN detection uses https:// (not http://) so it works from HTTPS pages without
-// mixed-content blocking. Hubitat C8/C8 Pro listens on HTTPS locally. The result
-// is cached in window.__hubLanReachable so hubClient can read it synchronously.
+// LAN detection uses WebRTC ICE candidates so it works without trusting the hub's
+// self-signed cert. window.__hubLanReachable is set so hubClient reads it without
+// React context. Commands always attempt LAN first when on subnet, falling back to
+// cloud silently if the cert hasn't been trusted yet.
 export function useConnectivity(hub) {
   const [mode, setMode] = useState('cloud');
   const timerRef = useRef(null);
@@ -20,21 +43,7 @@ export function useConnectivity(hub) {
 
     async function check() {
       const [hasLan, hasInternet] = await Promise.all([
-        hub?.ip
-          ? (async () => {
-              try {
-                const ctrl = new AbortController();
-                const t = setTimeout(() => ctrl.abort(), LAN_TIMEOUT_MS);
-                // mode:'no-cors' → opaque response, but any non-throw means hub is up.
-                // Uses HTTPS so no mixed-content warning on the page security indicator.
-                await fetch(`https://${hub.ip}`, { signal: ctrl.signal, mode: 'no-cors' });
-                clearTimeout(t);
-                return true;
-              } catch { return false; }
-            })()
-          : Promise.resolve(false),
-
-        // Cloud: ping own server
+        isOnHubSubnet(hub?.ip),
         (async () => {
           try {
             const ctrl = new AbortController();
@@ -55,7 +64,7 @@ export function useConnectivity(hub) {
       else if (hasInternet) setMode('cloud');
       else                  setMode('offline');
 
-      timerRef.current = setTimeout(check, 10_000);
+      timerRef.current = setTimeout(check, 15_000);
     }
 
     check();
