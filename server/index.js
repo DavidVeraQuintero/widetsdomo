@@ -253,9 +253,10 @@ async function pollHubDeviceStates() {
         const deviceId = String(dev.id);
         const key = `${hub.id}:${deviceId}`;
         const curr = {};
-        for (const a of (dev.attributes ?? [])) {
-          if (WATCHED_ATTRS.has(a.name) && a.currentValue !== null && a.currentValue !== undefined) {
-            curr[a.name] = a.currentValue;
+        const attrs = dev.attributes ?? {};
+        for (const [name, value] of Object.entries(attrs)) {
+          if (WATCHED_ATTRS.has(name) && value !== null && value !== undefined) {
+            curr[name] = value;
           }
         }
         const prev = _devStates[key];
