@@ -1,20 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 
 const CLOUD_TIMEOUT_MS = 3000;
+const LAN_PROBE_MS     = 1500;
 
-// Detect if local IP is on the same /24 subnet as the hub using WebRTC ICE candidates.
-// This requires NO connection to the hub and NO cert trust — the browser reveals its
-// own local IPs as part of the WebRTC negotiation process.
-async function isOnHubSubnet(hubIp) {
+// Method 1 — WebRTC: discover local IPs without touching the hub or needing cert trust.
+// Returns true if any local IP is in the same /24 as hubIp.
+async function webrtcOnSubnet(hubIp) {
   if (!hubIp) return false;
-  const hubPrefix = hubIp.split('.').slice(0, 3).join('.'); // e.g. "192.168.11"
+  const hubPrefix = hubIp.split('.').slice(0, 3).join('.');
   try {
     const pc = new RTCPeerConnection({ iceServers: [] });
     pc.createDataChannel('');
     await pc.createOffer().then(o => pc.setLocalDescription(o));
-    return new Promise(resolve => {
+    return await new Promise(resolve => {
       let done = false;
-      const finish = (val) => { if (done) return; done = true; pc.close(); resolve(val); };
+      const finish = (v) => { if (done) return; done = true; pc.close(); resolve(v); };
       setTimeout(() => finish(false), 800);
       pc.onicecandidate = (e) => {
         if (!e?.candidate?.candidate) return;
@@ -25,15 +25,28 @@ async function isOnHubSubnet(hubIp) {
   } catch { return false; }
 }
 
+// Method 2 — HTTPS timing: a fast non-abort failure means the hub responded (TCP
+// reached it) but rejected the cert. That's still "hub is on LAN".
+// A true timeout (AbortError) means the hub is unreachable from this network.
+async function httpsProbeOnLan(hubIp) {
+  if (!hubIp) return false;
+  const t0 = performance.now();
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), LAN_PROBE_MS);
+    await fetch(`https://${hubIp}`, { signal: ctrl.signal, mode: 'no-cors' });
+    clearTimeout(timer);
+    return true; // responded — cert trusted
+  } catch (e) {
+    const elapsed = performance.now() - t0;
+    // Fast non-abort = cert error but hub IS physically reachable
+    return e.name !== 'AbortError' && elapsed < LAN_PROBE_MS * 0.9;
+  }
+}
+
 // Returns: 'local' | 'cloud' | 'offline'
-// 'local'  — device is on same /24 as Hubitat → commands attempt LAN first
-// 'cloud'  — internet up, not on hub subnet  → commands via cloud.hubitat.com
-// 'offline'— no internet and not on hub subnet → blocking modal
-//
-// LAN detection uses WebRTC ICE candidates so it works without trusting the hub's
-// self-signed cert. window.__hubLanReachable is set so hubClient reads it without
-// React context. Commands always attempt LAN first when on subnet, falling back to
-// cloud silently if the cert hasn't been trusted yet.
+// Uses both WebRTC (subnet check, no cert needed) and HTTPS timing (fast-fail = reachable)
+// so detection works whether or not the hub cert has been trusted in this browser.
 export function useConnectivity(hub) {
   const [mode, setMode] = useState('cloud');
   const timerRef = useRef(null);
@@ -43,7 +56,10 @@ export function useConnectivity(hub) {
 
     async function check() {
       const [hasLan, hasInternet] = await Promise.all([
-        isOnHubSubnet(hub?.ip),
+        hub?.ip
+          ? Promise.any([webrtcOnSubnet(hub.ip), httpsProbeOnLan(hub.ip)]).catch(() => false)
+          : Promise.resolve(false),
+
         (async () => {
           try {
             const ctrl = new AbortController();
@@ -57,7 +73,6 @@ export function useConnectivity(hub) {
 
       if (cancelled) return;
 
-      // Expose LAN status globally — hubClient.js reads this without React context
       window.__hubLanReachable = hasLan;
 
       if (hasLan)           setMode('local');
@@ -68,7 +83,6 @@ export function useConnectivity(hub) {
     }
 
     check();
-
     window.addEventListener('online',  check);
     window.addEventListener('offline', check);
 
