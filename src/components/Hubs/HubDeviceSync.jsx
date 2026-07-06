@@ -77,7 +77,7 @@ export default function HubDeviceSync() {
         if (seen.has(key)) continue;
         seen.add(key);
         const hub = hubsRef.current.find(h => h.id === w.config.hubId);
-        if (!hub?.enabled) continue;
+        if (hub?.enabled === false) continue;
         targets.push({ hub, hubId: w.config.hubId, deviceId: w.config.deviceId });
       }
       if (targets.length === 0) return;

@@ -88,7 +88,7 @@ export function HubProvider({ children }) {
 
   const refreshHub = useCallback(async (hubId) => {
     const hub = state.hubs.find(h => h.id === hubId);
-    if (!hub?.enabled) return;
+    if (hub?.enabled === false) return;
     try {
       const { devices: devs } = await fetchHubDevices(hub);
       setDevices(prev => ({ ...prev, [hubId]: devs }));
@@ -98,7 +98,7 @@ export function HubProvider({ children }) {
   }, [state.hubs]);
 
   const refreshAll = useCallback(async () => {
-    await Promise.all(state.hubs.filter(h => h.enabled).map(h => refreshHub(h.id)));
+    await Promise.all(state.hubs.filter(h => h.enabled !== false).map(h => refreshHub(h.id)));
   }, [state.hubs, refreshHub]);
 
   const hubsKey = state.hubs.map(h => h.id).join(',');
