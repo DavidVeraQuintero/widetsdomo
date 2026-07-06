@@ -4,7 +4,7 @@ import { useDashboard } from '../../store/dashboardStore.jsx';
 import { triggerDeviceRefresh, readDeviceState } from '../../services/hubClient.js';
 
 const CMD_GRACE_MS = 10_000;
-const POLL_MS = 60_000;
+const POLL_MS = 15_000;
 const LAN_WS_RECONNECT_MS = 30_000;
 
 function applyLiveState(config, live) {
@@ -145,7 +145,7 @@ export default function HubDeviceSync() {
     };
   }, [hub0Id, applyToWidgets]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fallback polling: initial state load on mount + slow refresh every 60s
+  // Fallback polling: initial state load on mount + periodic refresh
   // Catches any events missed by WebSocket (reconnects, hub restarts, etc.)
   useEffect(() => {
     const poll = async () => {
@@ -163,10 +163,14 @@ export default function HubDeviceSync() {
       }
       if (!targets.length) return;
 
-      await Promise.allSettled(
-        targets.map(({ hub, deviceId }) => triggerDeviceRefresh(hub, deviceId))
-      );
-      await new Promise(r => setTimeout(r, 1500));
+      // Only trigger device refresh + wait when on LAN — the refresh command
+      // has no effect via cloud, and the 1.5s wait is wasted on mobile/cloud path.
+      if (window.__hubLanReachable) {
+        await Promise.allSettled(
+          targets.map(({ hub, deviceId }) => triggerDeviceRefresh(hub, deviceId))
+        );
+        await new Promise(r => setTimeout(r, 1500));
+      }
 
       await Promise.allSettled(targets.map(async ({ hub, hubId, deviceId }) => {
         try {
