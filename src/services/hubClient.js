@@ -56,18 +56,18 @@ async function fetchViaCloudProxy(hub, path, method = 'GET') {
   return await res.json();
 }
 
-// Local-first: if useConnectivity detected the hub on LAN (window.__hubLanReachable),
-// try a direct HTTPS call to the hub's local IP first — no cloud round-trip.
-// Falls back silently to cloud.hubitat.com if the direct call fails.
+// Local-first for all operations when on LAN.
+// Commands use fireAndForget=true (mode:no-cors, always bypasses CORS).
+// Reads use regular fetch — work locally only if Hubitat has CORS enabled
+// (Apps → Maker API → Allow access from any origin). Falls back to cloud proxy silently.
 // Returns { data, via: 'local'|'cloud' } so callers can report which path was used.
-// fireAndForget=true skips response reading (used for commands, bypasses CORS check).
 async function fetchHubitat(hub, path, method = 'GET', fireAndForget = false) {
   if (window.__hubLanReachable && hub.ip) {
     try {
       const data = await fetchDirectLocal(hub, path, method, fireAndForget);
       return { data, via: 'local' };
     } catch {
-      // Hub was reachable during probe but command failed — fall through to cloud
+      // CORS blocked or unreachable — fall through to cloud
     }
   }
 

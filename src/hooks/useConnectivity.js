@@ -3,8 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 const CLOUD_TIMEOUT_MS = 3000;
 const LAN_PROBE_MS     = 1500;
 
-// Method 1 — WebRTC: discover local IPs without touching the hub or needing cert trust.
-// Returns true if any local IP is in the same /24 as hubIp.
 async function webrtcOnSubnet(hubIp) {
   if (!hubIp) return false;
   const hubPrefix = hubIp.split('.').slice(0, 3).join('.');
@@ -25,9 +23,6 @@ async function webrtcOnSubnet(hubIp) {
   } catch { return false; }
 }
 
-// Method 2 — HTTPS timing: a fast non-abort failure means the hub responded (TCP
-// reached it) but rejected the cert. That's still "hub is on LAN".
-// A true timeout (AbortError) means the hub is unreachable from this network.
 async function httpsProbeOnLan(hubIp) {
   if (!hubIp) return false;
   const t0 = performance.now();
@@ -36,17 +31,27 @@ async function httpsProbeOnLan(hubIp) {
     const timer = setTimeout(() => ctrl.abort(), LAN_PROBE_MS);
     await fetch(`https://${hubIp}`, { signal: ctrl.signal, mode: 'no-cors' });
     clearTimeout(timer);
-    return true; // responded — cert trusted
+    return true;
   } catch (e) {
     const elapsed = performance.now() - t0;
-    // Fast non-abort = cert error but hub IS physically reachable
     return e.name !== 'AbortError' && elapsed < LAN_PROBE_MS * 0.9;
   }
 }
 
+async function checkInternet() {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), CLOUD_TIMEOUT_MS);
+    const r = await fetch('/api/me', { signal: ctrl.signal });
+    clearTimeout(t);
+    return r.status !== 0;
+  } catch { return false; }
+}
+
 // Returns: 'local' | 'cloud' | 'offline'
-// Uses both WebRTC (subnet check, no cert needed) and HTTPS timing (fast-fail = reachable)
-// so detection works whether or not the hub cert has been trusted in this browser.
+// If hub is detected on LAN (WebRTC subnet or fast HTTPS response), mode is 'local'
+// immediately — no need to wait for the internet ping. Internet is only checked when
+// LAN is not available to distinguish 'cloud' from 'offline'.
 export function useConnectivity(hub) {
   const [mode, setMode] = useState('cloud');
   const timerRef = useRef(null);
@@ -55,29 +60,22 @@ export function useConnectivity(hub) {
     let cancelled = false;
 
     async function check() {
-      const [hasLan, hasInternet] = await Promise.all([
-        hub?.ip
-          ? Promise.any([webrtcOnSubnet(hub.ip), httpsProbeOnLan(hub.ip)]).catch(() => false)
-          : Promise.resolve(false),
-
-        (async () => {
-          try {
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), CLOUD_TIMEOUT_MS);
-            const r = await fetch('/api/me', { signal: ctrl.signal });
-            clearTimeout(t);
-            return r.status !== 0;
-          } catch { return false; }
-        })(),
-      ]);
+      // Check LAN first — if detected, no need to wait for internet ping
+      const hasLan = hub?.ip
+        ? await Promise.any([webrtcOnSubnet(hub.ip), httpsProbeOnLan(hub.ip)]).catch(() => false)
+        : false;
 
       if (cancelled) return;
 
       window.__hubLanReachable = hasLan;
 
-      if (hasLan)           setMode('local');
-      else if (hasInternet) setMode('cloud');
-      else                  setMode('offline');
+      if (hasLan) {
+        setMode('local');
+      } else {
+        // Only ping internet when not on LAN
+        const hasInternet = await checkInternet();
+        if (!cancelled) setMode(hasInternet ? 'cloud' : 'offline');
+      }
 
       timerRef.current = setTimeout(check, 15_000);
     }
