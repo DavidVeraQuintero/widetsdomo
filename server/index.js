@@ -37,6 +37,7 @@ await initDB();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use('/uploads', express.static(UPLOADS_DIR));
 
@@ -70,6 +71,7 @@ app.post('/api/hub-webhook', async (req, res) => {
   const hub = hubs.find(h => h.token === accessToken);
   if (!hub) return res.status(403).json({ error: 'Unknown token' });
   const body = req.body;
+  console.log('[webhook] content-type:', req.headers['content-type'], '| body keys:', Object.keys(body));
   let evt;
   try {
     evt = body.content ? JSON.parse(body.content) : body;
@@ -77,6 +79,7 @@ app.post('/api/hub-webhook', async (req, res) => {
     return res.status(400).json({ error: 'Invalid body' });
   }
   if (evt.source !== 'DEVICE') return res.json({ ok: true });
+  console.log('[webhook] DEVICE event:', evt.name, '=', evt.value, 'device', evt.deviceId);
   broadcast({
     type: 'DEVICE_EVENT',
     hubId: hub.id,
