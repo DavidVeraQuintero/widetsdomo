@@ -25,16 +25,17 @@ async function webrtcOnSubnet(hubIp) {
 
 async function httpsProbeOnLan(hubIp) {
   if (!hubIp) return false;
-  const t0 = performance.now();
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), LAN_PROBE_MS);
     await fetch(`https://${hubIp}`, { signal: ctrl.signal, mode: 'no-cors' });
     clearTimeout(timer);
+    // Only a successful opaque response means the hub is reachable on LAN.
+    // Any error (cert, network, timeout) returns false — WebRTC handles LAN
+    // detection when cert isn't accepted, preventing mobile-data false positives.
     return true;
-  } catch (e) {
-    const elapsed = performance.now() - t0;
-    return e.name !== 'AbortError' && elapsed < LAN_PROBE_MS * 0.9;
+  } catch {
+    return false;
   }
 }
 
