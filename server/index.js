@@ -261,7 +261,14 @@ async function pollHubDeviceStates() {
         }
         const prev = _devStates[key];
         _devStates[key] = curr;
-        if (!prev) continue; // first run — seed state only, no broadcasts
+        if (!prev) {
+          // First run after server start: broadcast current state so any connected
+          // clients with stale saved state sync to reality immediately.
+          for (const [name, value] of Object.entries(curr)) {
+            broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+          }
+          continue;
+        }
         for (const [name, value] of Object.entries(curr)) {
           if (String(prev[name]) !== String(value)) {
             broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });

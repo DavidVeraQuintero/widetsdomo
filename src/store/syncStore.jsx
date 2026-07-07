@@ -37,6 +37,9 @@ export function SyncProvider({ children }) {
     ws.onopen = () => {
       setStatus('connected');
       reconnectDelay.current = 1000;
+      // Signal HubDeviceSync to poll device states immediately so stale widget
+      // states are corrected right after connect/reconnect, without waiting 15s.
+      window.dispatchEvent(new Event('sync:ws-connected'));
     };
 
     ws.onclose = () => {

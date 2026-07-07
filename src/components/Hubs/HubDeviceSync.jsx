@@ -145,7 +145,7 @@ export default function HubDeviceSync() {
     };
   }, [hub0Id, applyToWidgets]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fallback polling: initial state load on mount + periodic refresh
+  // Fallback polling: initial state load on mount + periodic refresh + on WS reconnect
   // Catches any events missed by WebSocket (reconnects, hub restarts, etc.)
   useEffect(() => {
     const poll = async () => {
@@ -185,7 +185,12 @@ export default function HubDeviceSync() {
 
     poll();
     const interval = setInterval(poll, POLL_MS);
-    return () => clearInterval(interval);
+    // Poll immediately when WebSocket reconnects to resync stale states
+    window.addEventListener('sync:ws-connected', poll);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('sync:ws-connected', poll);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
