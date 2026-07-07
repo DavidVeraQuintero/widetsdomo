@@ -3,6 +3,22 @@ import { useState, useEffect, useRef } from 'react';
 const CLOUD_TIMEOUT_MS = 3000;
 const LAN_PROBE_MS     = 1500;
 
+// Resolves true as soon as any promise resolves to a truthy value.
+// Resolves false only when all have resolved to falsy. Unlike Promise.any,
+// this ignores falsy resolutions and waits for a truthy one.
+function anyTrue(promises) {
+  return new Promise((resolve) => {
+    let remaining = promises.length;
+    if (remaining === 0) { resolve(false); return; }
+    for (const p of promises) {
+      Promise.resolve(p).then(
+        v => { if (v) resolve(true); else if (--remaining === 0) resolve(false); },
+        () => { if (--remaining === 0) resolve(false); },
+      );
+    }
+  });
+}
+
 async function webrtcOnSubnet(hubIp) {
   if (!hubIp) return false;
   const hubPrefix = hubIp.split('.').slice(0, 3).join('.');
@@ -63,7 +79,7 @@ export function useConnectivity(hub) {
     async function check() {
       // Check LAN first — if detected, no need to wait for internet ping
       const hasLan = hub?.ip
-        ? await Promise.any([webrtcOnSubnet(hub.ip), httpsProbeOnLan(hub.ip)]).catch(() => false)
+        ? await anyTrue([webrtcOnSubnet(hub.ip), httpsProbeOnLan(hub.ip)])
         : false;
 
       if (cancelled) return;
