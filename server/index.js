@@ -218,7 +218,7 @@ if (process.env.RENDER_EXTERNAL_URL) {
 // Server-side device state polling — broadcasts DEVICE_EVENT to all WS clients
 // when a device attribute changes. Primary real-time path for mobile clients
 // since Hubitat's Maker API webhook delivery is unreliable.
-const SERVER_POLL_MS = 8_000;
+const SERVER_POLL_MS = 2_000;
 const _devStates = {};
 const WATCHED_ATTRS = new Set([
   'contact', 'switch', 'level', 'hue', 'saturation',
@@ -238,7 +238,7 @@ async function pollHubDeviceStates() {
       const token = cloudUrl.searchParams.get('access_token') || hub.token;
       const basePath = cloudUrl.pathname;
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 10_000);
+      const timer = setTimeout(() => ctrl.abort(), 6_000);
       let res;
       try {
         res = await fetch(
@@ -282,6 +282,10 @@ async function pollHubDeviceStates() {
   }
 }
 
-// Seed initial state then broadcast changes every 8s
-pollHubDeviceStates();
-setInterval(pollHubDeviceStates, SERVER_POLL_MS);
+// Seed initial state then keep polling — next cycle starts only after the
+// previous one finishes, so a slow Hubitat Cloud response never causes overlap.
+async function schedulePoll() {
+  await pollHubDeviceStates();
+  setTimeout(schedulePoll, SERVER_POLL_MS);
+}
+schedulePoll();
