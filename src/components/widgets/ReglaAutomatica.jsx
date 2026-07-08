@@ -369,6 +369,13 @@ function ConditionGroup({ node, onUpdate, onDelete, depth, hubStore }) {
 
 // ── Modal principal ────────────────────────────────────────────
 
+function hasTimeConditions(node) {
+  if (!node) return false;
+  if (node.type === 'time') return true;
+  if (node.type === 'group') return (node.children ?? []).some(hasTimeConditions);
+  return false;
+}
+
 const DEFAULT_CONDITION = { id: 'root', type: 'group', operator: 'AND', children: [] };
 
 function ConfigModal({ config, onSave, onClose }) {
@@ -377,11 +384,46 @@ function ConfigModal({ config, onSave, onClose }) {
   const [condition, setCondition] = useState(config.condition ?? DEFAULT_CONDITION);
   const [actions, setActions] = useState(config.actions ?? []);
   const [addingAction, setAddingAction] = useState(false);
+  const { syncRule, hubs } = useHub();
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
+  const [testing, setTesting] = useState(false);
   const stop = e => e.stopPropagation();
 
   const deleteAction = id => setActions(prev => prev.filter(a => a.id !== id));
   const addAction = action => { setActions(prev => [...prev, action]); setAddingAction(false); };
   const save = () => onSave({ ...config, name: localName, condition, conditionGroups: undefined, actions });
+
+  const handleSaveToHubitat = async () => {
+    const autoHub = hubs.find(h => h.autoAppId);
+    if (!autoHub) {
+      setSyncError('Configura el App ID de automatizaciones en la configuración del hub.');
+      return;
+    }
+    setSyncing(true);
+    setSyncError(null);
+    try {
+      const ruleId = config.id ?? nanoid();
+      const newConfig = { ...config, id: ruleId, name: localName, condition, conditionGroups: undefined, actions };
+      const hubId = await syncRule(ruleId, newConfig, autoHub.id);
+      onSave({ ...newConfig, hubitatSynced: true, hubitatHubId: hubId, _testing: undefined });
+    } catch (err) {
+      setSyncError(err.message || 'Error al guardar en Hubitat');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleProbar = () => {
+    const newConfig = { ...config, name: localName, condition, conditionGroups: undefined, actions };
+    onSave({ ...newConfig, _testing: true });
+    setTesting(true);
+  };
+
+  const handleCerrarPrueba = () => {
+    onSave({ ...config, _testing: undefined });
+    setTesting(false);
+  };
 
   return createPortal(
     <div style={{ position:'fixed', inset:0, zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.75)' }}
@@ -425,7 +467,73 @@ function ConfigModal({ config, onSave, onClose }) {
           </div>
         </div>
 
-        <button className="w-btn" style={{ width:'100%' }} onMouseDown={stop} onClick={save}>Guardar</button>
+        {/* ── Hubitat sync section ─────────────────────────────── */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+          {/* Status badge */}
+          <div style={{ fontSize: 11, color: config.hubitatSynced ? '#48bb78' : 'var(--text-dim)' }}>
+            {config.hubitatSynced ? '● En Hubitat' : '○ Solo local'}
+          </div>
+
+          {/* Time condition warning */}
+          {hasTimeConditions(condition) && (
+            <div style={{ fontSize: 11, color: '#ed8936', background: 'rgba(237,137,54,0.12)', borderRadius: 6, padding: '5px 8px' }}>
+              Esta regla tiene condiciones de hora. Esas condiciones solo se evaluarán mientras el dashboard esté abierto.
+            </div>
+          )}
+
+          {/* Error */}
+          {syncError && (
+            <div style={{ fontSize: 11, color: '#fc8181', background: 'rgba(252,129,129,0.1)', borderRadius: 6, padding: '5px 8px' }}>
+              {syncError}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className="w-btn"
+              style={{ flex: 1 }}
+              onMouseDown={stop}
+              onClick={handleProbar}
+              disabled={syncing}
+            >
+              Probar
+            </button>
+            <button
+              className="w-btn"
+              style={{ flex: 1, background: syncing ? undefined : 'rgba(72,187,120,0.15)', borderColor: '#48bb78' }}
+              onMouseDown={stop}
+              onClick={handleSaveToHubitat}
+              disabled={syncing}
+            >
+              {syncing ? 'Guardando…' : 'Guardar en Hubitat'}
+            </button>
+          </div>
+
+          <button className="w-btn" style={{ width: '100%' }} onMouseDown={stop} onClick={save}>
+            Guardar local
+          </button>
+        </div>
+
+        {/* ── Test modal ───────────────────────────────────────── */}
+        {testing && createPortal(
+          <div style={{ position: 'fixed', inset: 0, zIndex: 2100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
+            <div style={{ ...modalBox, width: '22rem', gap: '1rem' }}>
+              <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: '0.92rem' }}>
+                Probando: "{localName}"
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Activa manualmente las condiciones de la regla para verificar que las acciones se ejecuten correctamente.
+                <br /><br />
+                El motor local está escuchando.
+              </div>
+              <button className="w-btn" style={{ width: '100%' }} onClick={handleCerrarPrueba}>
+                Cerrar prueba
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </div>,
     document.body
