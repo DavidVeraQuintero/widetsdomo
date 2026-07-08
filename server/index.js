@@ -10,14 +10,15 @@ import fs from 'node:fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import {
   initDB, getAllState, saveDashboard, deleteDashboard, removeDashboardFromMeta,
-  saveMeta, getImages, removeImage, getAllDashboards, saveHubs, getHubs, resetAllData
+  saveMeta, getImages, removeImage, getAllDashboards, saveHubs, getHubs, resetAllData,
+  getAccessConfig, setAccessConfig,
 } from './db.js';
 import { addClient, removeClient, broadcast } from './broadcast.js';
 import imageRouter from './routes.js';
 import hubProxyRouter from './hubProxy.js';
 import {
   verifyCredentials, generateToken, setSessionCookie, clearSessionCookie,
-  authMiddleware, verifyWsRequest, verifyToken
+  authMiddleware, verifyWsRequest, verifyToken, verifyGoogleCredential,
 } from './auth.js';
 
 const loginLimiter = rateLimit({
@@ -91,10 +92,52 @@ app.post('/api/hub-webhook', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Google OAuth (no auth middleware) ───────────────────────────────────────
+app.get('/api/auth/google-client-id', async (_req, res) => {
+  const { houseName } = await getAccessConfig();
+  res.json({
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    houseName,
+  });
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { credential } = req.body ?? {};
+  if (!credential) return res.status(400).json({ error: 'Missing credential' });
+  if (!process.env.GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google OAuth no configurado' });
+
+  const email = await verifyGoogleCredential(credential);
+  if (!email) return res.status(401).json({ error: 'Token de Google inválido' });
+
+  const { allowedEmails } = await getAccessConfig();
+  const normalizedEmail = email.toLowerCase();
+  const allowed = allowedEmails.map(e => e.toLowerCase());
+  if (!allowed.includes(normalizedEmail)) {
+    return res.status(403).json({ error: 'Email no autorizado. Solicita acceso al administrador.' });
+  }
+
+  const token = generateToken();
+  setSessionCookie(res, token);
+  res.json({ ok: true });
+});
+
 // ─── Protected API routes ────────────────────────────────────────────────────
 app.use('/api', authMiddleware);
 app.use('/api', imageRouter);
 app.use('/api', hubProxyRouter);
+
+app.get('/api/admin/config', async (_req, res) => {
+  const config = await getAccessConfig();
+  res.json(config);
+});
+
+app.post('/api/admin/config', async (req, res) => {
+  const { houseName, allowedEmails } = req.body ?? {};
+  if (typeof houseName !== 'string') return res.status(400).json({ error: 'houseName requerido' });
+  if (!Array.isArray(allowedEmails)) return res.status(400).json({ error: 'allowedEmails debe ser array' });
+  await setAccessConfig({ houseName, allowedEmails });
+  res.json({ ok: true });
+});
 
 app.delete('/api/dashboard/:id', async (req, res) => {
   await deleteDashboard(req.params.id);
