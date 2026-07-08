@@ -168,3 +168,23 @@ export async function getAllState() {
   const wipedAt = await getWipedAt();
   return { dashboards, meta, images, hubs, assignments, wipedAt };
 }
+
+export async function getAccessConfig() {
+  const nameRow = await q("SELECT value FROM config WHERE key='house_name'");
+  const emailsRow = await q("SELECT value FROM config WHERE key='google_allowed_emails'");
+  return {
+    houseName: nameRow[0]?.value ?? '',
+    allowedEmails: emailsRow[0] ? JSON.parse(emailsRow[0].value) : [],
+  };
+}
+
+export async function setAccessConfig({ houseName, allowedEmails }) {
+  await q(
+    "INSERT INTO config (key,value) VALUES ('house_name',$1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    [String(houseName)]
+  );
+  await q(
+    "INSERT INTO config (key,value) VALUES ('google_allowed_emails',$1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    [JSON.stringify(Array.isArray(allowedEmails) ? allowedEmails : [])]
+  );
+}
