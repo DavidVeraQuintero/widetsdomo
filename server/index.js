@@ -101,7 +101,7 @@ app.get('/api/auth/google-client-id', async (_req, res) => {
   });
 });
 
-app.post('/api/auth/google', async (req, res) => {
+app.post('/api/auth/google', loginLimiter, async (req, res) => {
   const { credential } = req.body ?? {};
   if (!credential) return res.status(400).json({ error: 'Missing credential' });
   if (!process.env.GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google OAuth no configurado' });
@@ -134,8 +134,10 @@ app.get('/api/admin/config', async (_req, res) => {
 app.post('/api/admin/config', async (req, res) => {
   const { houseName, allowedEmails } = req.body ?? {};
   if (typeof houseName !== 'string') return res.status(400).json({ error: 'houseName requerido' });
-  if (!Array.isArray(allowedEmails)) return res.status(400).json({ error: 'allowedEmails debe ser array' });
-  await setAccessConfig({ houseName, allowedEmails });
+  if (!Array.isArray(allowedEmails) || !allowedEmails.every(e => typeof e === 'string')) {
+    return res.status(400).json({ error: 'allowedEmails debe ser array de strings' });
+  }
+  await setAccessConfig({ houseName: houseName.trim(), allowedEmails: allowedEmails.map(e => e.trim()).filter(e => e) });
   res.json({ ok: true });
 });
 
