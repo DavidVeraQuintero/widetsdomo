@@ -10,11 +10,6 @@ definition(
 )
 
 preferences {
-    section("Autenticación") {
-        input "accessToken", "text",
-            title: "Token de acceso (copia el valor del campo 'autoToken' que aparece en esta página)",
-            required: true
-    }
     section("Dispositivos") {
         input "managedDevices", "capability.*",
             title: "Todos los dispositivos a monitorear y controlar",
@@ -61,7 +56,7 @@ def initialize() {
 // ── Auth ──────────────────────────────────────────────────────────
 
 private boolean authorized() {
-    return params.access_token && params.access_token == settings.accessToken
+    return params.access_token && params.access_token == state.accessToken
 }
 
 // ── HTTP Endpoints ────────────────────────────────────────────────
@@ -82,7 +77,7 @@ def upsertRule() {
     def body = request.JSON
     if (!body?.id) { httpError(400, "Missing id"); return }
     if (!state.rules) state.rules = [:]
-    state.rules[body.id] = body
+    state.rules[body.id] = body as Map
     if (state.lastResults[body.id] == null) state.lastResults[body.id] = false
     unsubscribe()
     subscribeAll()
@@ -104,8 +99,12 @@ def setRuleEnabled() {
     def id = params.id
     if (!state.rules?.containsKey(id)) { httpError(404, "Rule not found"); return }
     def body = request.JSON
-    state.rules[id].enabled = (body.enabled == true || body.enabled == "true")
-    if (!state.rules[id].enabled) state.lastResults[id] = false
+    def rules = state.rules ?: [:]
+    rules[id].enabled = (body.enabled == true || body.enabled == "true")
+    state.rules = rules
+    def lr = state.lastResults ?: [:]
+    if (!rules[id].enabled) lr[id] = false
+    state.lastResults = lr
     unsubscribe()
     subscribeAll()
     render contentType: "application/json", data: groovy.json.JsonOutput.toJson([ok: true])
@@ -124,6 +123,7 @@ private void subscribeAll() {
             subscribed.add(key)
             def dev = findDevice(node.deviceId)
             if (dev) subscribe(dev, node.attribute, "onDeviceEvent")
+            else log.warn "WidetsDomo: device ${node.deviceId} not in managedDevices — add it in app settings"
         }
     }
 }
@@ -148,9 +148,13 @@ def onDeviceEvent(evt) {
         if (!refs) continue
         def result = evalNode(rule.condition)
         def prev = state.lastResults?[rule.id] ?: false
-        if (result && !prev) executeActions(rule.actions ?: [])
-        if (!state.lastResults) state.lastResults = [:]
-        state.lastResults[rule.id] = result
+        if (result && !prev) {
+            log.info "WidetsDomo: rule '${rule.id}' fired → executing ${(rule.actions ?: []).size()} action(s)"
+            executeActions(rule.actions ?: [])
+        }
+        def lr = state.lastResults ?: [:]
+        lr[rule.id] = result
+        state.lastResults = lr
     }
 }
 
@@ -175,6 +179,7 @@ private boolean evalNode(node) {
 }
 
 private boolean evalDeviceCondition(cond) {
+    if (!cond.deviceId || !cond.attribute) return false
     def dev = findDevice(cond.deviceId)
     if (!dev) return false
     def actual = dev.currentValue(cond.attribute)
