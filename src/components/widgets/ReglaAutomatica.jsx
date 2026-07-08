@@ -380,11 +380,11 @@ const DEFAULT_CONDITION = { id: 'root', type: 'group', operator: 'AND', children
 
 function ConfigModal({ config, onSave, onClose }) {
   const hubStore = useHub();
+  const { syncRule, hubs } = hubStore;
   const [localName, setLocalName] = useState(config.name ?? 'Mi regla');
   const [condition, setCondition] = useState(config.condition ?? DEFAULT_CONDITION);
   const [actions, setActions] = useState(config.actions ?? []);
   const [addingAction, setAddingAction] = useState(false);
-  const { syncRule, hubs } = useHub();
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState(null);
   const [testing, setTesting] = useState(false);
