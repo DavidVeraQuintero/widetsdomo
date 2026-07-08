@@ -205,6 +205,7 @@ export async function checkLocalHubReachable(hub) {
 
 function autoPath(hub, suffix) {
   if (!hub.autoAppId) throw new Error('Hub has no autoAppId configured');
+  if (!hub.autoToken) throw new Error('Hub has no autoToken configured');
   return `/apps/api/${hub.autoAppId}${suffix}?access_token=${hub.autoToken}`;
 }
 
@@ -237,6 +238,7 @@ export async function deleteRuleFromHubitat(hub, ruleId) {
   return callAutoApp(hub, autoPath(hub, `/rules/${ruleId}`), 'DELETE');
 }
 
+// pingAutoApp never throws — callers use the returned { ok, error } to show status
 export async function pingAutoApp(hub) {
   try {
     return await callAutoApp(hub, autoPath(hub, '/ping'), 'GET');

@@ -75,3 +75,21 @@ test('syncRuleToHubitat: throws if hub has no autoAppId', async () => {
     /autoAppId/
   );
 });
+
+test('syncRuleToHubitat: throws on HTTP 403 response', async () => {
+  global.fetch = async () => ({ ok: false, status: 403, json: async () => ({}) });
+  await assert.rejects(() => syncRuleToHubitat(HUB, RULE), /AutoApp HTTP 403/);
+  // restore
+  global.fetch = async (url, opts) => {
+    lastFetchArgs = { url, opts };
+    return { ok: true, status: 200, json: async () => ({ ok: true }) };
+  };
+});
+
+test('syncRuleToHubitat: throws if hub has no autoToken', async () => {
+  const hubNoToken = { ...HUB, autoToken: null };
+  await assert.rejects(
+    () => syncRuleToHubitat(hubNoToken, RULE),
+    /autoToken/
+  );
+});
