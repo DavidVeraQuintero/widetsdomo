@@ -1,13 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import styles from './Login.module.css';
 
 export default function Login({ onAuth }) {
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [houseName, setHouseName] = useState('');
+  const [showAdminForm, setShowAdminForm] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    fetch('/api/auth/google-client-id')
+      .then(r => r.json())
+      .then(d => {
+        setGoogleClientId(d.clientId ?? '');
+        setHouseName(d.houseName ?? '');
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleGoogleSuccess = async ({ credential }) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential }),
+      });
+      if (res.ok) {
+        onAuth();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'No autorizado');
+      }
+    } catch {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -30,46 +66,81 @@ export default function Login({ onAuth }) {
     }
   };
 
+  const form = (
+    <div className={styles.card}>
+      <div className={styles.logo}>🏠</div>
+      <div className={styles.title}>{houseName || 'Mi Hogar'}</div>
+
+      {googleClientId && (
+        <>
+          <div className={styles.googleBtn}>
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Error al iniciar con Google')}
+              width="256"
+              theme="filled_black"
+            />
+          </div>
+          {!showAdminForm && (
+            <div className={styles.divider}><span>o</span></div>
+          )}
+        </>
+      )}
+
+      {!showAdminForm && (
+        <button
+          type="button"
+          className={styles.adminToggle}
+          onClick={() => setShowAdminForm(true)}
+        >
+          Acceso admin
+        </button>
+      )}
+
+      {showAdminForm && (
+        <form className={styles.adminSection} onSubmit={handleAdminSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label}>Usuario</label>
+            <input
+              className={styles.input}
+              type="text"
+              value={user}
+              onChange={e => setUser(e.target.value)}
+              placeholder="admin"
+              autoComplete="username"
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Contraseña</label>
+            <input
+              className={styles.input}
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+            />
+          </div>
+          <button
+            className={styles.btn}
+            type="submit"
+            disabled={loading || !user || !password}
+          >
+            {loading ? 'Ingresando...' : 'Ingresar'}
+          </button>
+        </form>
+      )}
+
+      <div className={styles.error}>{error}</div>
+    </div>
+  );
+
   return (
     <div className={styles.page}>
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <div className={styles.logo}>🏠</div>
-        <div className={styles.title}>Dashboard Domótica</div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Usuario</label>
-          <input
-            className={styles.input}
-            type="text"
-            value={user}
-            onChange={e => setUser(e.target.value)}
-            placeholder="admin"
-            autoComplete="username"
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label className={styles.label}>Contraseña</label>
-          <input
-            className={styles.input}
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-        </div>
-
-        <div className={styles.error}>{error}</div>
-
-        <button
-          className={styles.btn}
-          type="submit"
-          disabled={loading || !user || !password}
-        >
-          {loading ? 'Ingresando...' : 'Ingresar'}
-        </button>
-      </form>
+      {googleClientId
+        ? <GoogleOAuthProvider clientId={googleClientId}>{form}</GoogleOAuthProvider>
+        : form
+      }
     </div>
   );
 }

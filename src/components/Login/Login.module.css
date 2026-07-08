@@ -92,3 +92,48 @@
 .btn:not(:disabled):hover {
   opacity: 0.88;
 }
+
+.googleBtn {
+  display: flex;
+  justify-content: center;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.adminToggle {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.06em;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.adminToggle:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.adminSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
