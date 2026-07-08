@@ -31,7 +31,12 @@ router.post('/hub-proxy', async (req, res) => {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const upstream = await fetch(url, { method, headers, signal: ctrl.signal });
+    const fetchOpts = { method, headers, signal: ctrl.signal };
+    if (req.body?.body) {
+      fetchOpts.body = req.body.body;
+      fetchOpts.headers = { ...headers, 'Content-Type': 'application/json' };
+    }
+    const upstream = await fetch(url, fetchOpts);
     clearTimeout(timer);
     const data = await upstream.json();
     res.status(upstream.status).json(data);
