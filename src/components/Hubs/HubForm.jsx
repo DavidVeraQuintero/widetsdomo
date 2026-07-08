@@ -11,6 +11,8 @@ export default function HubForm({ editHub, onDone }) {
   const [appId, setAppId] = useState(editHub?.appId || '');
   const [token, setToken] = useState(editHub?.token || '');
   const [cloudUrl, setCloudUrl] = useState(editHub?.cloudUrl || '');
+  const [autoAppId, setAutoAppId] = useState(editHub?.autoAppId || '');
+  const [autoToken, setAutoToken] = useState(editHub?.autoToken || '');
   const [testResult, setTestResult] = useState(null);
   const [testing, setTesting] = useState(false);
 
@@ -27,7 +29,7 @@ export default function HubForm({ editHub, onDone }) {
   }, [type, ip, appId, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = () => {
-    const hubData = { type, name: name || ip, ip, appId, token, cloudUrl };
+    const hubData = { type, name: name || ip, ip, appId, token, cloudUrl, autoAppId, autoToken };
     if (editHub) {
       dispatch({ type: 'UPDATE_HUB', id: editHub.id, changes: hubData });
       refreshHub(editHub.id);
@@ -89,6 +91,33 @@ export default function HubForm({ editHub, onDone }) {
               onChange={e => setCloudUrl(e.target.value)}
               placeholder="https://cloud.hubitat.com/api/{uid}/apps/{appId}"
             />
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className={styles.label}>AUTOMATIZACIONES (GROOVY APP)</div>
+            <div className={styles.fieldRow}>
+              <div className={styles.field}>
+                <label className={styles.label}>APP ID AUTO</label>
+                <input
+                  className={styles.input}
+                  value={autoAppId}
+                  onChange={e => setAutoAppId(e.target.value)}
+                  placeholder="47"
+                />
+              </div>
+              <div className={styles.field} style={{ flex: 2 }}>
+                <label className={styles.label}>TOKEN AUTO</label>
+                <input
+                  className={styles.input}
+                  type="password"
+                  value={autoToken}
+                  onChange={e => setAutoToken(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 4 }}>
+              Instala WidetsDomo Automations en Hubitat → Apps Code. App ID y Token aparecen en la página de la app instalada.
+            </div>
           </div>
         </>
       )}
