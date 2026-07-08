@@ -59,3 +59,17 @@ export function verifyWsRequest(req) {
   const cookies = parseCookies(req.headers.cookie || '');
   return verifyToken(cookies[COOKIE_NAME]);
 }
+
+export async function verifyGoogleCredential(credential) {
+  try {
+    const res = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+    );
+    if (!res.ok) return null;
+    const payload = await res.json();
+    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) return null;
+    return payload.email ?? null;
+  } catch {
+    return null;
+  }
+}
