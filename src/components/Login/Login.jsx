@@ -22,6 +22,7 @@ export default function Login({ onAuth }) {
   }, []);
 
   const handleGoogleSuccess = async ({ credential }) => {
+    if (loading) return;
     setError('');
     setLoading(true);
     try {
@@ -73,7 +74,7 @@ export default function Login({ onAuth }) {
 
       {googleClientId && (
         <>
-          <div className={styles.googleBtn}>
+          <div className={styles.googleBtn} style={showAdminForm ? { marginBottom: 8 } : undefined}>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError('Error al iniciar con Google')}
@@ -127,6 +128,13 @@ export default function Login({ onAuth }) {
             disabled={loading || !user || !password}
           >
             {loading ? 'Ingresando...' : 'Ingresar'}
+          </button>
+          <button
+            type="button"
+            className={styles.adminToggle}
+            onClick={() => { setShowAdminForm(false); setError(''); }}
+          >
+            Cancelar
           </button>
         </form>
       )}
