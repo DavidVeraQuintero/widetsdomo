@@ -1,5 +1,12 @@
 import { createContext, useContext, useReducer, useState, useMemo, useCallback, useEffect } from 'react';
-import { fetchHubDevices, sendDeviceCommand } from '../services/hubClient.js';
+import {
+  fetchHubDevices,
+  sendDeviceCommand,
+  syncRuleToHubitat,
+  setRuleEnabledOnHubitat,
+  deleteRuleFromHubitat,
+  pingAutoApp,
+} from '../services/hubClient.js';
 
 const HUB_KEY = 'domotica-hubs';
 const pendingCmds = new Map(); // "hubId:deviceId:command" → timerId
@@ -126,6 +133,36 @@ export function HubProvider({ children }) {
     }, DEBOUNCE_MS));
   }, [state.hubs]);
 
+  const getAutoHub = useCallback((hubId) => {
+    if (hubId) return state.hubs.find(h => h.id === hubId) ?? null;
+    return state.hubs.find(h => h.autoAppId) ?? null;
+  }, [state.hubs]);
+
+  const syncRule = useCallback(async (ruleId, config, hubId) => {
+    const hub = getAutoHub(hubId);
+    if (!hub) throw new Error('No hub configured with autoAppId');
+    await syncRuleToHubitat(hub, { id: ruleId, ...config });
+    return hub.id;
+  }, [state.hubs, getAutoHub]);
+
+  const setRuleEnabled = useCallback(async (ruleId, enabled, hubId) => {
+    const hub = getAutoHub(hubId);
+    if (!hub) throw new Error('No hub configured with autoAppId');
+    await setRuleEnabledOnHubitat(hub, ruleId, enabled);
+  }, [state.hubs, getAutoHub]);
+
+  const deleteRule = useCallback(async (ruleId, hubId) => {
+    const hub = getAutoHub(hubId);
+    if (!hub) throw new Error('No hub configured with autoAppId');
+    await deleteRuleFromHubitat(hub, ruleId);
+  }, [state.hubs, getAutoHub]);
+
+  const pingHubAutoApp = useCallback(async (hubId) => {
+    const hub = state.hubs.find(h => h.id === hubId);
+    if (!hub) return { ok: false, error: 'Hub not found' };
+    return pingAutoApp(hub);
+  }, [state.hubs]);
+
   // Listen for device events broadcast via the sync WebSocket (cloud webhook flow)
   useEffect(() => {
     const handler = (e) => {
@@ -165,7 +202,11 @@ export function HubProvider({ children }) {
     refreshAll,
     sendCommand,
     updateDeviceState,
-  }), [state.hubs, state.assignments, devices, deviceStates, deviceCounts, refreshHub, refreshAll, sendCommand, updateDeviceState]); // eslint-disable-line react-hooks/exhaustive-deps
+    syncRule,
+    setRuleEnabled,
+    deleteRule,
+    pingHubAutoApp,
+  }), [state.hubs, state.assignments, devices, deviceStates, deviceCounts, refreshHub, refreshAll, sendCommand, updateDeviceState, syncRule, setRuleEnabled, deleteRule, pingHubAutoApp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <HubContext.Provider value={ctxValue}>
