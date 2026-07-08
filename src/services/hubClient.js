@@ -200,3 +200,47 @@ export async function checkLocalHubReachable(hub) {
     return false;
   }
 }
+
+// ── Automation rule management ────────────────────────────────────
+
+function autoPath(hub, suffix) {
+  if (!hub.autoAppId) throw new Error('Hub has no autoAppId configured');
+  return `/apps/api/${hub.autoAppId}${suffix}?access_token=${hub.autoToken}`;
+}
+
+async function callAutoApp(hub, path, method, bodyObj) {
+  const res = await fetch('/api/hub-proxy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: hub.type,
+      ip: hub.cloudUrl ? 'cloud.hubitat.com' : hub.ip,
+      token: hub.autoToken,
+      path,
+      method,
+      body: bodyObj !== undefined ? JSON.stringify(bodyObj) : undefined,
+    }),
+  });
+  if (!res.ok) throw new Error(`AutoApp HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function syncRuleToHubitat(hub, rule) {
+  return callAutoApp(hub, autoPath(hub, '/rules'), 'POST', rule);
+}
+
+export async function setRuleEnabledOnHubitat(hub, ruleId, enabled) {
+  return callAutoApp(hub, autoPath(hub, `/rules/${ruleId}/enable`), 'PUT', { enabled });
+}
+
+export async function deleteRuleFromHubitat(hub, ruleId) {
+  return callAutoApp(hub, autoPath(hub, `/rules/${ruleId}`), 'DELETE');
+}
+
+export async function pingAutoApp(hub) {
+  try {
+    return await callAutoApp(hub, autoPath(hub, '/ping'), 'GET');
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
