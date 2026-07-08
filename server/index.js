@@ -135,6 +135,17 @@ wss.on('connection', async (ws, req) => {
   const fullState = await getAllState();
   ws.send(JSON.stringify({ type: 'FULL_STATE', ...fullState }));
 
+  // Send cached live device states immediately so the client shows current state
+  // without waiting for the next poll cycle.
+  for (const [key, attrs] of Object.entries(_devStates)) {
+    const sep = key.indexOf(':');
+    const hubId = key.slice(0, sep);
+    const deviceId = key.slice(sep + 1);
+    for (const [attribute, value] of Object.entries(attrs)) {
+      ws.send(JSON.stringify({ type: 'DEVICE_EVENT', hubId, deviceId, attribute, value: String(value), ts: Date.now() }));
+    }
+  }
+
   ws.on('message', async (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
@@ -226,59 +237,99 @@ const WATCHED_ATTRS = new Set([
   'presence', 'motion', 'temperature', 'humidity', 'lock', 'door',
 ]);
 
+// Tracks whether each hub's local IP is reachable from the server.
+// undefined = untested, true = reachable, false = not reachable (skip for session).
+const _hubLocalReachable = {};
+
+async function fetchHubDevicesLocal(hub) {
+  if (!hub.ip || !hub.appId || !hub.token) return null;
+  if (_hubLocalReachable[hub.id] === false) return null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 1_500);
+    let res;
+    try {
+      res = await fetch(
+        `http://${hub.ip}/apps/api/${hub.appId}/devices/all?access_token=${hub.token}`,
+        { signal: ctrl.signal }
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    _hubLocalReachable[hub.id] = true;
+    return Array.isArray(data) ? data : null;
+  } catch {
+    if (_hubLocalReachable[hub.id] === undefined) {
+      _hubLocalReachable[hub.id] = false; // unreachable — skip for this session
+    }
+    return null;
+  }
+}
+
+async function fetchHubDevicesCloud(hub) {
+  if (!hub.cloudUrl) return null;
+  const cloudUrl = new URL(hub.cloudUrl);
+  const token = cloudUrl.searchParams.get('access_token') || hub.token;
+  const basePath = cloudUrl.pathname;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6_000);
+  try {
+    const res = await fetch(
+      `https://cloud.hubitat.com${basePath}/devices/all?access_token=${token}`,
+      { signal: ctrl.signal }
+    );
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) ? data : null;
+  } catch {
+    clearTimeout(timer);
+    return null;
+  }
+}
+
+function applyDeviceList(hub, devices) {
+  for (const dev of devices) {
+    const deviceId = String(dev.id);
+    const key = `${hub.id}:${deviceId}`;
+    const curr = {};
+    const attrs = dev.attributes ?? {};
+    for (const [name, value] of Object.entries(attrs)) {
+      if (WATCHED_ATTRS.has(name) && value !== null && value !== undefined) {
+        curr[name] = value;
+      }
+    }
+    const prev = _devStates[key];
+    _devStates[key] = curr;
+    if (!prev) {
+      for (const [name, value] of Object.entries(curr)) {
+        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+      }
+      continue;
+    }
+    for (const [name, value] of Object.entries(curr)) {
+      if (String(prev[name]) !== String(value)) {
+        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+      }
+    }
+  }
+}
+
 async function pollHubDeviceStates() {
   let hubData;
   try { hubData = await getHubs(); } catch { return; }
   const hubs = hubData?.hubs ?? [];
 
   for (const hub of hubs) {
-    if (hub.type !== 'hubitat' || !hub.cloudUrl) continue;
+    if (hub.type !== 'hubitat') continue;
     try {
-      const cloudUrl = new URL(hub.cloudUrl);
-      const token = cloudUrl.searchParams.get('access_token') || hub.token;
-      const basePath = cloudUrl.pathname;
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 6_000);
-      let res;
-      try {
-        res = await fetch(
-          `https://cloud.hubitat.com${basePath}/devices/all?access_token=${token}`,
-          { signal: ctrl.signal }
-        );
-      } finally {
-        clearTimeout(timer);
-      }
-      if (!res.ok) continue;
-      const devices = await res.json();
-      if (!Array.isArray(devices)) continue;
-
-      for (const dev of devices) {
-        const deviceId = String(dev.id);
-        const key = `${hub.id}:${deviceId}`;
-        const curr = {};
-        const attrs = dev.attributes ?? {};
-        for (const [name, value] of Object.entries(attrs)) {
-          if (WATCHED_ATTRS.has(name) && value !== null && value !== undefined) {
-            curr[name] = value;
-          }
-        }
-        const prev = _devStates[key];
-        _devStates[key] = curr;
-        if (!prev) {
-          // First run after server start: broadcast current state so any connected
-          // clients with stale saved state sync to reality immediately.
-          for (const [name, value] of Object.entries(curr)) {
-            broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
-          }
-          continue;
-        }
-        for (const [name, value] of Object.entries(curr)) {
-          if (String(prev[name]) !== String(value)) {
-            broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
-          }
-        }
-      }
-    } catch { /* hub unreachable or network error — retry next cycle */ }
+      // Local HTTP first (no cloud sync lag) — falls back to cloud if server isn't on same LAN.
+      const devices = await fetchHubDevicesLocal(hub) ?? await fetchHubDevicesCloud(hub);
+      if (!devices) continue;
+      applyDeviceList(hub, devices);
+    } catch { /* hub unreachable — retry next cycle */ }
   }
 }
 
