@@ -1,8 +1,8 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { initDB, getAccessConfig, setAccessConfig } from '../db.js';
 
-test('getAccessConfig returns empty defaults when nothing stored', async () => {
+test('getAccessConfig returns correct structure', async () => {
   await initDB();
   // Note: puede haber datos de corridas previas; sólo verificamos la estructura
   const config = await getAccessConfig();
@@ -32,4 +32,10 @@ test('setAccessConfig handles empty emails array', async () => {
   await setAccessConfig({ houseName: 'Sin emails', allowedEmails: [] });
   const config = await getAccessConfig();
   assert.deepEqual(config.allowedEmails, []);
+});
+
+after(async () => {
+  await initDB();
+  // Clean up test keys from the real DB so tests are repeatable
+  await setAccessConfig({ houseName: '', allowedEmails: [] });
 });
