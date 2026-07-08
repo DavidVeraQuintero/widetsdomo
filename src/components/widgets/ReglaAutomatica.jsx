@@ -1,5 +1,5 @@
 // src/components/widgets/ReglaAutomatica.jsx
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Toggle from './Toggle';
 import SvgIcon from './SvgIcon';
@@ -378,7 +378,7 @@ function hasTimeConditions(node) {
 
 const DEFAULT_CONDITION = { id: 'root', type: 'group', operator: 'AND', children: [] };
 
-function ConfigModal({ config, onSave, onClose }) {
+function ConfigModal({ config, onSave, onUpdateConfig, onClose }) {
   const hubStore = useHub();
   const { syncRule, hubs } = hubStore;
   const [localName, setLocalName] = useState(config.name ?? 'Mi regla');
@@ -388,11 +388,13 @@ function ConfigModal({ config, onSave, onClose }) {
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState(null);
   const [testing, setTesting] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   const stop = e => e.stopPropagation();
 
   const deleteAction = id => setActions(prev => prev.filter(a => a.id !== id));
   const addAction = action => { setActions(prev => [...prev, action]); setAddingAction(false); };
-  const save = () => onSave({ ...config, name: localName, condition, conditionGroups: undefined, actions });
+  const save = () => onSave({ ...config, name: localName, condition, conditionGroups: undefined, actions, _testing: undefined });
 
   const handleSaveToHubitat = async () => {
     const autoHub = hubs.find(h => h.autoAppId);
@@ -410,18 +412,18 @@ function ConfigModal({ config, onSave, onClose }) {
     } catch (err) {
       setSyncError(err.message || 'Error al guardar en Hubitat');
     } finally {
-      setSyncing(false);
+      if (mountedRef.current) setSyncing(false);
     }
   };
 
   const handleProbar = () => {
     const newConfig = { ...config, name: localName, condition, conditionGroups: undefined, actions };
-    onSave({ ...newConfig, _testing: true });
+    onUpdateConfig({ ...newConfig, _testing: true });
     setTesting(true);
   };
 
   const handleCerrarPrueba = () => {
-    onSave({ ...config, _testing: undefined });
+    onUpdateConfig({ ...config, name: localName, condition, conditionGroups: undefined, actions, _testing: undefined });
     setTesting(false);
   };
 
@@ -495,7 +497,6 @@ function ConfigModal({ config, onSave, onClose }) {
               style={{ flex: 1 }}
               onMouseDown={stop}
               onClick={handleProbar}
-              disabled={syncing}
             >
               Probar
             </button>
@@ -554,7 +555,12 @@ export default function ReglaAutomatica({ size, config, onConfigChange }) {
     : (conditionGroups ?? []).flatMap(g => g.conditions ?? []);
 
   const Modal = modal && (
-    <ConfigModal config={config} onSave={c => { onConfigChange(c); setModal(false); }} onClose={() => setModal(false)} />
+    <ConfigModal
+      config={config}
+      onSave={c => { onConfigChange(c); setModal(false); }}
+      onUpdateConfig={onConfigChange}
+      onClose={() => setModal(false)}
+    />
   );
 
   if (size === '1x2') return (
