@@ -548,7 +548,20 @@ export default function ReglaAutomatica({ size, config, onConfigChange }) {
   const [modal, setModal] = useState(false);
   const longPress = useLongPress(() => setModal(true));
   const col = enabled ? 'var(--icon-on)' : 'var(--text-dim)';
-  const toggle = e => { e?.stopPropagation(); onConfigChange({ ...config, enabled: !enabled }); };
+  const { setRuleEnabled } = useHub();
+
+  const toggle = async (e) => {
+    e?.stopPropagation();
+    const newEnabled = !enabled;
+    if (config.hubitatSynced && config.hubitatHubId && config.id) {
+      try {
+        await setRuleEnabled(config.id, newEnabled, config.hubitatHubId);
+      } catch (err) {
+        console.warn('[ReglaAutomatica] toggle sync failed:', err.message);
+      }
+    }
+    onConfigChange({ ...config, enabled: newEnabled });
+  };
 
   const allLeaves = condition
     ? collectLeaves(condition)
@@ -566,6 +579,13 @@ export default function ReglaAutomatica({ size, config, onConfigChange }) {
   if (size === '1x2') return (
     <>
       <div className="w-body w-center" {...longPress}>
+        {config.hubitatSynced && (
+          <div style={{ position: 'absolute', top: 4, left: 8, fontSize: 9, color: '#48bb78',
+            background: 'rgba(72,187,120,0.15)', border: '1px solid rgba(72,187,120,0.4)',
+            borderRadius: 4, padding: '1px 5px', fontWeight: 700, letterSpacing: 0.5 }}>
+            HUBITAT
+          </div>
+        )}
         <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={enabled} onToggle={toggle} /></div>
         <SvgIcon id="rule" size={44} color={col} className={enabled ? 'icon-glow' : ''} />
         <div style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>{name}</div>
@@ -578,6 +598,13 @@ export default function ReglaAutomatica({ size, config, onConfigChange }) {
   if (size === '2x1') return (
     <>
       <div className="w-row-body" style={{ position:'relative' }} {...longPress}>
+        {config.hubitatSynced && (
+          <div style={{ position: 'absolute', top: 4, left: 8, fontSize: 9, color: '#48bb78',
+            background: 'rgba(72,187,120,0.15)', border: '1px solid rgba(72,187,120,0.4)',
+            borderRadius: 4, padding: '1px 5px', fontWeight: 700, letterSpacing: 0.5 }}>
+            HUBITAT
+          </div>
+        )}
         <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={enabled} onToggle={toggle} /></div>
         <SvgIcon id="rule" size={32} color={col} className={enabled ? 'icon-glow' : ''} />
         <div className="w-info" style={{ paddingRight:44 }}>
@@ -594,6 +621,13 @@ export default function ReglaAutomatica({ size, config, onConfigChange }) {
   return (
     <>
       <div className="w-body" {...longPress}>
+        {config.hubitatSynced && (
+          <div style={{ position: 'absolute', top: 4, left: 8, fontSize: 9, color: '#48bb78',
+            background: 'rgba(72,187,120,0.15)', border: '1px solid rgba(72,187,120,0.4)',
+            borderRadius: 4, padding: '1px 5px', fontWeight: 700, letterSpacing: 0.5 }}>
+            HUBITAT
+          </div>
+        )}
         <div style={{ position:'absolute', top:4, right:12, zIndex:1 }}><Toggle on={enabled} onToggle={toggle} /></div>
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2, paddingRight:44 }}>
           <SvgIcon id="rule" size={14} color={col} />
