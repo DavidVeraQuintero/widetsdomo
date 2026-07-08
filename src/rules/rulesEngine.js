@@ -23,7 +23,9 @@ export default function RulesEngine() {
   const lastResults = useRef({});
 
   const runAll = (states, now) => {
-    const rules = state.widgets.filter(w => w.type === 'regla-auto');
+    const rules = state.widgets.filter(
+      w => w.type === 'regla-auto' && (!w.config.hubitatSynced || w.config._testing)
+    );
     for (const widget of rules) {
       const result = evaluateRule(widget.config, states, now);
       const prev = lastResults.current[widget.id] ?? false;
@@ -41,7 +43,9 @@ export default function RulesEngine() {
   }, [deviceStates]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const rules = state.widgets.filter(w => w.type === 'regla-auto');
+    const rules = state.widgets.filter(
+      w => w.type === 'regla-auto' && (!w.config.hubitatSynced || w.config._testing)
+    );
     if (!rules.some(ruleHasTime)) return;
     const id = setInterval(() => runAll(deviceStates, new Date()), 60_000);
     return () => clearInterval(id);
