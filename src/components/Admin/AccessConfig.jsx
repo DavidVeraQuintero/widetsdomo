@@ -20,7 +20,7 @@ export default function AccessConfig() {
 
   const addEmail = () => {
     const trimmed = newEmail.trim().toLowerCase();
-    if (!trimmed || emails.includes(trimmed)) return;
+    if (!trimmed || emails.some(e => e.toLowerCase() === trimmed)) return;
     setEmails(prev => [...prev, trimmed]);
     setNewEmail('');
   };
