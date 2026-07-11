@@ -21,6 +21,7 @@ import HubDeviceSync from './components/Hubs/HubDeviceSync.jsx';
 import { useConnectivity } from './hooks/useConnectivity.js';
 import OfflineModal from './components/Modal/OfflineModal.jsx';
 import StatusBar from './components/StatusBar/StatusBar.jsx';
+import AccessConfig from './components/Admin/AccessConfig.jsx';
 
 const TABS = [
   { id: 'widgets', icon: '📦', label: 'Widgets' },
@@ -151,8 +152,7 @@ function AppContent({ onLogout }) {
           {activeTab === 'hubs'    && <HubsTab />}
           {activeTab === 'cuenta'  && (
             <div className={styles.cuentaPanel}>
-              <div className={styles.cuentaTitle}>👤 admin</div>
-              <div className={styles.cuentaSub}>Sesión activa · cookie 30 días</div>
+              <AccessConfig />
               <button className={styles.logoutBtn} onClick={onLogout}>
                 ⏻ Cerrar sesión
               </button>
