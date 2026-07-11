@@ -147,7 +147,7 @@ def onDeviceEvent(evt) {
         def refs = collectDeviceNodes(rule.condition).any { it.deviceId == String.valueOf(evt.deviceId) }
         if (!refs) continue
         def result = evalNode(rule.condition)
-        def prev = state.lastResults?[rule.id] ?: false
+        def prev = state.lastResults ? state.lastResults[rule.id] : false
         if (result && !prev) {
             log.info "WidetsDomo: rule '${rule.id}' fired → executing ${(rule.actions ?: []).size()} action(s)"
             executeActions(rule.actions ?: [])
