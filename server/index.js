@@ -134,7 +134,7 @@ app.get('/api/admin/config', async (_req, res) => {
 app.post('/api/admin/config', async (req, res) => {
   const { houseName, allowedEmails } = req.body ?? {};
   if (typeof houseName !== 'string') return res.status(400).json({ error: 'houseName requerido' });
-  if (!Array.isArray(allowedEmails) || !allowedEmails.every(e => typeof e === 'string')) {
+  if (!Array.isArray(allowedEmails) || !allowedEmails.every(e => typeof e === 'string' && e.includes('@'))) {
     return res.status(400).json({ error: 'allowedEmails debe ser array de strings' });
   }
   await setAccessConfig({ houseName: houseName.trim(), allowedEmails: allowedEmails.map(e => e.trim()).filter(e => e) });

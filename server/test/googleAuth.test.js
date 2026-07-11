@@ -68,3 +68,18 @@ test('verifyGoogleCredential returns null when email not verified', async () => 
     globalThis.fetch = orig;
   }
 });
+
+test('verifyGoogleCredential returns null when email_verified is boolean false', async () => {
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ aud: 'my-client-id', email: 'user@gmail.com', email_verified: false }),
+  });
+  process.env.GOOGLE_CLIENT_ID = 'my-client-id';
+  try {
+    const email = await verifyGoogleCredential('fake-jwt');
+    assert.equal(email, null);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});

@@ -68,7 +68,7 @@ export async function verifyGoogleCredential(credential) {
     if (!res.ok) return null;
     const payload = await res.json();
     if (payload.aud !== process.env.GOOGLE_CLIENT_ID) return null;
-    if (payload.email_verified !== 'true') return null;
+    if (payload.email_verified !== 'true' && payload.email_verified !== true) return null;
     return payload.email ?? null;
   } catch {
     return null;
