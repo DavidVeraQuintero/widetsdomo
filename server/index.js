@@ -10,15 +10,16 @@ import fs from 'node:fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import {
   initDB, getAllState, saveDashboard, deleteDashboard, removeDashboardFromMeta,
-  saveMeta, getImages, removeImage, getAllDashboards, saveHubs, getHubs, resetAllData,
-  getAccessConfig, setAccessConfig,
+  saveMeta, getImages, removeImage, getAllDashboards, saveHubs, getHubs, resetHome,
+  createHome, deleteHome, listHomes, getHome, addHomeMember, removeHomeMember,
+  listHomeMembers, getHomesByEmail, getAllHubsForAllHomes,
 } from './db.js';
 import { addClient, removeClient, broadcast } from './broadcast.js';
 import imageRouter from './routes.js';
 import hubProxyRouter from './hubProxy.js';
 import {
   verifyCredentials, generateToken, setSessionCookie, clearSessionCookie,
-  authMiddleware, verifyWsRequest, verifyToken, verifyGoogleCredential,
+  authMiddleware, homeMiddleware, verifyWsRequest, verifyToken, verifyGoogleCredential,
 } from './auth.js';
 
 const loginLimiter = rateLimit({
@@ -48,7 +49,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   if (!user || !password) return res.status(400).json({ error: 'Missing credentials' });
   const ok = await verifyCredentials(user, password);
   if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = generateToken();
+  const token = generateToken({ isAdmin: true, email: null, homeId: null });
   setSessionCookie(res, token);
   res.json({ ok: true });
 });
@@ -58,9 +59,25 @@ app.post('/api/logout', (_req, res) => {
   res.json({ ok: true });
 });
 
+// New primary endpoint
+app.get('/api/session/info', (req, res) => {
+  const token = req.cookies?.session;
+  const payload = token ? verifyToken(token) : null;
+  if (!payload) return res.status(401).json({ ok: false });
+  const isAdmin = payload.isAdmin ?? (payload.user != null);
+  res.json({
+    ok: true,
+    isAdmin,
+    email: payload.email ?? null,
+    homeId: payload.homeId ?? null,
+  });
+});
+
+// Keep /api/me as alias for offline-auth localStorage fallback
 app.get('/api/me', (req, res) => {
   const token = req.cookies?.session;
-  if (!token || !verifyToken(token)) return res.status(401).json({ ok: false });
+  const payload = token ? verifyToken(token) : null;
+  if (!payload) return res.status(401).json({ ok: false });
   res.json({ ok: true });
 });
 
@@ -93,12 +110,8 @@ app.post('/api/hub-webhook', async (req, res) => {
 });
 
 // ─── Google OAuth (no auth middleware) ───────────────────────────────────────
-app.get('/api/auth/google-client-id', async (_req, res) => {
-  const { houseName } = await getAccessConfig();
-  res.json({
-    clientId: process.env.GOOGLE_CLIENT_ID || '',
-    houseName,
-  });
+app.get('/api/auth/google-client-id', (_req, res) => {
+  res.json({ clientId: process.env.GOOGLE_CLIENT_ID || '' });
 });
 
 app.post('/api/auth/google', loginLimiter, async (req, res) => {
@@ -109,14 +122,12 @@ app.post('/api/auth/google', loginLimiter, async (req, res) => {
   const email = await verifyGoogleCredential(credential);
   if (!email) return res.status(401).json({ error: 'Token de Google inválido' });
 
-  const { allowedEmails } = await getAccessConfig();
-  const normalizedEmail = email.toLowerCase();
-  const allowed = allowedEmails.map(e => e.toLowerCase());
-  if (!allowed.includes(normalizedEmail)) {
+  const homes = await getHomesByEmail(email);
+  if (homes.length === 0) {
     return res.status(403).json({ error: 'Email no autorizado. Solicita acceso al administrador.' });
   }
 
-  const token = generateToken();
+  const token = generateToken({ isAdmin: false, email: email.toLowerCase(), homeId: null });
   setSessionCookie(res, token);
   res.json({ ok: true });
 });
@@ -126,19 +137,54 @@ app.use('/api', authMiddleware);
 app.use('/api', imageRouter);
 app.use('/api', hubProxyRouter);
 
-app.get('/api/admin/config', async (_req, res) => {
-  const config = await getAccessConfig();
-  res.json(config);
+// ─── Session navigation endpoints ────────────────────────────────────────────
+
+// Enter a home — re-issue JWT with homeId
+app.post('/api/session/enter-home', async (req, res) => {
+  const { homeId } = req.body ?? {};
+  if (!homeId) return res.status(400).json({ error: 'homeId requerido' });
+  const home = await getHome(homeId);
+  if (!home) return res.status(404).json({ error: 'Casa no encontrada' });
+
+  const { isAdmin, email } = req.session;
+  if (!isAdmin) {
+    const homes = await getHomesByEmail(email);
+    if (!homes.some(h => h.id === homeId)) {
+      return res.status(403).json({ error: 'Sin acceso a esta casa' });
+    }
+  }
+
+  const token = generateToken({ isAdmin, email, homeId });
+  setSessionCookie(res, token);
+  res.json({ ok: true, homeId, homeName: home.name });
 });
 
-app.post('/api/admin/config', async (req, res) => {
-  const { houseName, allowedEmails } = req.body ?? {};
-  if (typeof houseName !== 'string') return res.status(400).json({ error: 'houseName requerido' });
-  if (!Array.isArray(allowedEmails) || !allowedEmails.every(e => typeof e === 'string' && e.includes('@'))) {
-    return res.status(400).json({ error: 'allowedEmails debe ser array de strings' });
-  }
-  await setAccessConfig({ houseName: houseName.trim(), allowedEmails: allowedEmails.map(e => e.trim()).filter(e => e) });
+// Exit home — re-issue JWT without homeId
+app.post('/api/session/exit-home', (req, res) => {
+  const { isAdmin, email } = req.session;
+  const token = generateToken({ isAdmin, email, homeId: null });
+  setSessionCookie(res, token);
   res.json({ ok: true });
+});
+
+// List homes accessible to current user
+app.get('/api/session/my-homes', async (req, res) => {
+  const { isAdmin, email } = req.session;
+  if (isAdmin) {
+    const homes = await listHomes();
+    return res.json(homes);
+  }
+  const homes = await getHomesByEmail(email);
+  res.json(homes);
+});
+
+// TODO (Task 4): replace with multi-home config endpoints
+app.get('/api/admin/config', (_req, res) => {
+  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes' });
+});
+
+app.post('/api/admin/config', (_req, res) => {
+  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes' });
 });
 
 app.delete('/api/dashboard/:id', async (req, res) => {
@@ -149,13 +195,9 @@ app.delete('/api/dashboard/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// TODO (Task 4): wire to homeId from session
 app.post('/api/reset', async (_req, res) => {
-  const wipedAt = await resetAllData();
-  try {
-    fs.readdirSync(UPLOADS_DIR).forEach(f => fs.unlinkSync(path.join(UPLOADS_DIR, f)));
-  } catch {}
-  broadcast({ type: 'RESET', wipedAt });
-  res.json({ ok: true, wipedAt });
+  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes/:homeId/reset' });
 });
 
 // ─── Serve React build in production ────────────────────────────────────────
@@ -265,7 +307,7 @@ httpServer.listen(PORT, '0.0.0.0', () => {
 // Keep Render free tier alive — ping self every 10 min so the service
 // never reaches the 15-min inactivity threshold that triggers sleep.
 if (process.env.RENDER_EXTERNAL_URL) {
-  const selfUrl = `${process.env.RENDER_EXTERNAL_URL}/api/me`;
+  const selfUrl = `${process.env.RENDER_EXTERNAL_URL}/api/session/info`;
   setInterval(() => {
     fetch(selfUrl).catch(() => {});
   }, 10 * 60 * 1000);
