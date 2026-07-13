@@ -416,6 +416,11 @@ export function reducer(state, action, storageKey = DEFAULT_STORAGE_KEY) {
       persist(action.payload, storageKey);
       return action.payload;
     }
+    case 'RESET': {
+      const next = DEFAULT_STATE;
+      persist(next, storageKey);
+      return next;
+    }
     default:
       return state;
   }

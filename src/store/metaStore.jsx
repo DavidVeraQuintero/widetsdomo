@@ -165,6 +165,11 @@ function metaReducer(state, action) {
       persistMeta(payload);
       return payload;
     }
+    case 'RESET': {
+      const next = defaultMeta();
+      persistMeta(next);
+      return next;
+    }
     default:
       return state;
   }

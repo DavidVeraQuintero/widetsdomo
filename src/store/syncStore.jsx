@@ -109,6 +109,22 @@ export function SyncProvider({ children }) {
           break;
         }
 
+        // New home: server has no data — clear stale localStorage from previous home
+        // and reset stores to defaults. Never seed a new home with another home's data.
+        const serverEmpty = (!dashboards || dashboards.length === 0) && !meta &&
+          (!msg.hubs || msg.hubs.length === 0);
+        if (serverEmpty) {
+          clearLocalData();
+          serverHasData.current = true; // prevent SEED_STATE from firing
+          dashPendingRemote.current = true;
+          metaPendingRemote.current = true;
+          hubPendingRemote.current = true;
+          dashCtx.dispatch({ type: 'RESET' });
+          metaCtx.dispatch({ type: 'RESET' });
+          hubCtx.dispatch({ type: 'RESET' });
+          break;
+        }
+
         if (dashboards?.length > 0 || meta) serverHasData.current = true;
 
         // Write all dashboard states to localStorage so DashboardProvider
