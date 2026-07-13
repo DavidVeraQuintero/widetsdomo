@@ -178,26 +178,74 @@ app.get('/api/session/my-homes', async (req, res) => {
   res.json(homes);
 });
 
-// TODO (Task 4): replace with multi-home config endpoints
-app.get('/api/admin/config', (_req, res) => {
-  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes' });
+function requireAdmin(req, res, next) {
+  if (!req.session?.isAdmin) return res.status(403).json({ error: 'Admin only' });
+  next();
+}
+
+// ── Admin: homes management ──────────────────────────────────────────────────
+app.get('/api/admin/homes', requireAdmin, async (_req, res) => {
+  const homes = await listHomes();
+  res.json(homes);
 });
 
-app.post('/api/admin/config', (_req, res) => {
-  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes' });
+app.post('/api/admin/homes', requireAdmin, async (req, res) => {
+  const { name } = req.body ?? {};
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'name requerido' });
+  }
+  const home = await createHome(name.trim());
+  res.json(home);
 });
 
-app.delete('/api/dashboard/:id', async (req, res) => {
-  await deleteDashboard(req.params.id);
-  await removeDashboardFromMeta(req.params.id);
-  const { meta } = await getAllState();
-  if (meta) broadcast({ type: 'PATCH_META', meta, ts: Date.now() });
+app.delete('/api/admin/homes/:id', requireAdmin, async (req, res) => {
+  const home = await getHome(req.params.id);
+  if (!home) return res.status(404).json({ error: 'Casa no encontrada' });
+  await deleteHome(req.params.id);
   res.json({ ok: true });
 });
 
-// TODO (Task 4): wire to homeId from session
-app.post('/api/reset', async (_req, res) => {
-  res.status(410).json({ error: 'Endpoint removed — use /api/admin/homes/:homeId/reset' });
+app.get('/api/admin/homes/:id/members', requireAdmin, async (req, res) => {
+  const members = await listHomeMembers(req.params.id);
+  res.json(members);
+});
+
+app.post('/api/admin/homes/:id/members', requireAdmin, async (req, res) => {
+  const { email } = req.body ?? {};
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'email válido requerido' });
+  }
+  await addHomeMember(req.params.id, email.trim().toLowerCase());
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/homes/:id/members/:email', requireAdmin, async (req, res) => {
+  await removeHomeMember(req.params.id, decodeURIComponent(req.params.email));
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/homes/:id/enter', requireAdmin, async (req, res) => {
+  const home = await getHome(req.params.id);
+  if (!home) return res.status(404).json({ error: 'Casa no encontrada' });
+  const token = generateToken({ isAdmin: true, email: null, homeId: req.params.id });
+  setSessionCookie(res, token);
+  res.json({ ok: true, homeId: req.params.id, homeName: home.name });
+});
+
+app.delete('/api/dashboard/:id', homeMiddleware, async (req, res) => {
+  const { homeId } = req.session;
+  await deleteDashboard(homeId, req.params.id);
+  await removeDashboardFromMeta(homeId, req.params.id);
+  const { meta } = await getAllState(homeId);
+  if (meta) broadcast({ type: 'PATCH_META', meta, ts: Date.now() }, homeId, null);
+  res.json({ ok: true });
+});
+
+app.post('/api/reset', homeMiddleware, async (req, res) => {
+  const { homeId } = req.session;
+  const wipedAt = await resetHome(homeId);
+  broadcast({ type: 'RESET', wipedAt }, homeId, null);
+  res.json({ ok: true, wipedAt });
 });
 
 // ─── Serve React build in production ────────────────────────────────────────
