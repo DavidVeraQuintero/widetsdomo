@@ -1,4 +1,5 @@
 import pkg from 'pg';
+import { randomUUID } from 'node:crypto';
 const { Pool } = pkg;
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -174,7 +175,6 @@ export async function initDB() {
 
 // ── Public API — Homes CRUD ──────────────────────────────────────────────────
 export async function createHome(name) {
-  const { randomUUID } = await import('node:crypto');
   const id = randomUUID();
   const created_at = Date.now();
   await q(
@@ -206,7 +206,7 @@ export async function getHome(id) {
 export async function addHomeMember(homeId, email) {
   const normalized = email.toLowerCase();
   await q(
-    'INSERT INTO home_members (home_id, email) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    'INSERT INTO home_members (home_id, email) VALUES ($1, $2) ON CONFLICT(home_id, email) DO NOTHING',
     [homeId, normalized]
   );
 }
