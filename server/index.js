@@ -85,11 +85,16 @@ app.get('/api/me', (req, res) => {
 app.post('/api/hub-webhook', async (req, res) => {
   const accessToken = req.query.access_token;
   if (!accessToken) return res.status(400).json({ error: 'Missing access_token' });
-  const { hubs } = await getHubs();
-  const hub = hubs.find(h => h.token === accessToken);
+
+  const allHomeHubs = await getAllHubsForAllHomes();
+  let hub = null, hubHomeId = null;
+  for (const { homeId, hubs } of allHomeHubs) {
+    const found = hubs.find(h => h.token === accessToken);
+    if (found) { hub = found; hubHomeId = homeId; break; }
+  }
   if (!hub) return res.status(403).json({ error: 'Unknown token' });
+
   const body = req.body;
-  console.log('[webhook] content-type:', req.headers['content-type'], '| body keys:', Object.keys(body));
   let evt;
   try {
     evt = body.content ? JSON.parse(body.content) : body;
@@ -97,7 +102,6 @@ app.post('/api/hub-webhook', async (req, res) => {
     return res.status(400).json({ error: 'Invalid body' });
   }
   if (evt.source !== 'DEVICE') return res.json({ ok: true });
-  console.log('[webhook] DEVICE event:', evt.name, '=', evt.value, 'device', evt.deviceId);
   broadcast({
     type: 'DEVICE_EVENT',
     hubId: hub.id,
@@ -105,7 +109,7 @@ app.post('/api/hub-webhook', async (req, res) => {
     attribute: evt.name,
     value: evt.value,
     ts: Date.now(),
-  });
+  }, hubHomeId, null);
   res.json({ ok: true });
 });
 
@@ -260,24 +264,34 @@ const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer });
 
 wss.on('connection', async (ws, req) => {
-  if (!verifyWsRequest(req)) {
+  const session = verifyWsRequest(req);
+  if (!session) {
     ws.close(1008, 'Unauthorized');
     return;
   }
 
-  addClient(ws);
+  const homeId = session.homeId ?? null;
+  if (!homeId) {
+    ws.close(1008, 'No home selected');
+    return;
+  }
 
-  const fullState = await getAllState();
+  addClient(ws, homeId);
+
+  const fullState = await getAllState(homeId);
   ws.send(JSON.stringify({ type: 'FULL_STATE', ...fullState }));
 
-  // Send cached live device states immediately so the client shows current state
-  // without waiting for the next poll cycle.
-  for (const [key, attrs] of Object.entries(_devStates)) {
-    const sep = key.indexOf(':');
-    const hubId = key.slice(0, sep);
-    const deviceId = key.slice(sep + 1);
-    for (const [attribute, value] of Object.entries(attrs)) {
-      ws.send(JSON.stringify({ type: 'DEVICE_EVENT', hubId, deviceId, attribute, value: String(value), ts: Date.now() }));
+  // Send cached live device states for this home's hubs only
+  const { hubs } = await getHubs(homeId);
+  for (const hub of hubs) {
+    for (const [key, attrs] of Object.entries(_devStates)) {
+      const sep = key.indexOf(':');
+      const keyHubId = key.slice(0, sep);
+      if (keyHubId !== hub.id) continue;
+      const deviceId = key.slice(sep + 1);
+      for (const [attribute, value] of Object.entries(attrs)) {
+        ws.send(JSON.stringify({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute, value: String(value), ts: Date.now() }));
+      }
     }
   }
 
@@ -289,55 +303,55 @@ wss.on('connection', async (ws, req) => {
       case 'PATCH_DASHBOARD': {
         const { dashboardId, name, state, ts } = msg;
         if (dashboardId && state) {
-          await saveDashboard(dashboardId, name || dashboardId, JSON.stringify(state));
-          broadcast({ type: 'PATCH_DASHBOARD', dashboardId, state, ts }, ws);
+          await saveDashboard(homeId, dashboardId, name || dashboardId, JSON.stringify(state));
+          broadcast({ type: 'PATCH_DASHBOARD', dashboardId, state, ts }, homeId, ws);
         }
         break;
       }
       case 'PATCH_META': {
         const { meta, ts } = msg;
         if (meta) {
-          await saveMeta(JSON.stringify(meta));
-          broadcast({ type: 'PATCH_META', meta, ts }, ws);
+          await saveMeta(homeId, JSON.stringify(meta));
+          broadcast({ type: 'PATCH_META', meta, ts }, homeId, ws);
         }
         break;
       }
       case 'PATCH_HUBS': {
         const { hubs, assignments, ts } = msg;
         if (Array.isArray(hubs)) {
-          await saveHubs(JSON.stringify({ hubs, assignments: assignments || {} }));
-          broadcast({ type: 'PATCH_HUBS', hubs, assignments: assignments || {}, ts }, ws);
+          await saveHubs(homeId, JSON.stringify({ hubs, assignments: assignments || {} }));
+          broadcast({ type: 'PATCH_HUBS', hubs, assignments: assignments || {}, ts }, homeId, ws);
         }
         break;
       }
       case 'SEED_STATE': {
-        const existing = await getAllDashboards();
+        const existing = await getAllDashboards(homeId);
         if (existing.length > 0) {
-          ws.send(JSON.stringify({ type: 'FULL_STATE', ...await getAllState() }));
+          ws.send(JSON.stringify({ type: 'FULL_STATE', ...await getAllState(homeId) }));
           break;
         }
-        const { dashboards, meta, hubs } = msg;
+        const { dashboards, meta, hubs: seedHubs } = msg;
         if (Array.isArray(dashboards)) {
           for (const { id, name, state } of dashboards) {
-            await saveDashboard(id, name, JSON.stringify(state));
+            await saveDashboard(homeId, id, name, JSON.stringify(state));
           }
         }
-        if (meta) await saveMeta(JSON.stringify(meta));
-        if (Array.isArray(hubs) && hubs.length > 0) await saveHubs(JSON.stringify(hubs));
-        broadcast({ type: 'FULL_STATE', ...await getAllState() }, ws);
+        if (meta) await saveMeta(homeId, JSON.stringify(meta));
+        if (Array.isArray(seedHubs) && seedHubs.length > 0) await saveHubs(homeId, JSON.stringify(seedHubs));
+        broadcast({ type: 'FULL_STATE', ...await getAllState(homeId) }, homeId, ws);
         break;
       }
       case 'IMAGE_REMOVED': {
         const { id } = msg;
         if (id) {
-          const images = await getImages();
+          const images = await getImages(homeId);
           const img = images.find(i => i.id === id);
           if (img) {
             const filePath = path.join(UPLOADS_DIR, img.filename);
             fs.unlink(filePath, () => {});
-            await removeImage(id);
+            await removeImage(homeId, id);
           }
-          broadcast({ type: 'IMAGE_REMOVED', id, ts: Date.now() }, ws);
+          broadcast({ type: 'IMAGE_REMOVED', id, ts: Date.now() }, homeId, ws);
         }
         break;
       }
@@ -425,7 +439,7 @@ async function fetchHubDevicesCloud(hub) {
   }
 }
 
-function applyDeviceList(hub, devices) {
+function applyDeviceList(hub, homeId, devices) {
   for (const dev of devices) {
     const deviceId = String(dev.id);
     const key = `${hub.id}:${deviceId}`;
@@ -440,31 +454,31 @@ function applyDeviceList(hub, devices) {
     _devStates[key] = curr;
     if (!prev) {
       for (const [name, value] of Object.entries(curr)) {
-        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() }, homeId, null);
       }
       continue;
     }
     for (const [name, value] of Object.entries(curr)) {
       if (String(prev[name]) !== String(value)) {
-        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() });
+        broadcast({ type: 'DEVICE_EVENT', hubId: hub.id, deviceId, attribute: name, value: String(value), ts: Date.now() }, homeId, null);
       }
     }
   }
 }
 
 async function pollHubDeviceStates() {
-  let hubData;
-  try { hubData = await getHubs(); } catch { return; }
-  const hubs = hubData?.hubs ?? [];
+  let allHomeHubs;
+  try { allHomeHubs = await getAllHubsForAllHomes(); } catch { return; }
 
-  for (const hub of hubs) {
-    if (hub.type !== 'hubitat') continue;
-    try {
-      // Local HTTP first (no cloud sync lag) — falls back to cloud if server isn't on same LAN.
-      const devices = await fetchHubDevicesLocal(hub) ?? await fetchHubDevicesCloud(hub);
-      if (!devices) continue;
-      applyDeviceList(hub, devices);
-    } catch { /* hub unreachable — retry next cycle */ }
+  for (const { homeId, hubs } of allHomeHubs) {
+    for (const hub of hubs) {
+      if (hub.type !== 'hubitat') continue;
+      try {
+        const devices = await fetchHubDevicesLocal(hub) ?? await fetchHubDevicesCloud(hub);
+        if (!devices) continue;
+        applyDeviceList(hub, homeId, devices);
+      } catch { }
+    }
   }
 }
 

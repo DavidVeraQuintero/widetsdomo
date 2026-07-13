@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import { addImage, removeImage, getImages } from './db.js';
 import { broadcast } from './broadcast.js';
+import { homeMiddleware } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -20,26 +21,28 @@ const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const router = Router();
 
-router.post('/images', upload.single('image'), async (req, res) => {
+router.post('/images', homeMiddleware, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const { id } = req.body;
   if (!id) return res.status(400).json({ error: 'Missing id' });
+  const { homeId } = req.session;
   const filename = req.file.filename;
-  await addImage(id, filename);
+  await addImage(homeId, id, filename);
   const payload = { type: 'IMAGE_ADDED', id, filename, ts: Date.now() };
-  broadcast(payload, null);
+  broadcast(payload, homeId, null);
   res.json({ id, filename });
 });
 
-router.delete('/images/:id', async (req, res) => {
+router.delete('/images/:id', homeMiddleware, async (req, res) => {
   const { id } = req.params;
-  const images = await getImages();
+  const { homeId } = req.session;
+  const images = await getImages(homeId);
   const img = images.find(i => i.id === id);
   if (img) {
     const filePath = path.join(UPLOADS_DIR, img.filename);
     fs.unlink(filePath, () => {});
-    await removeImage(id);
-    broadcast({ type: 'IMAGE_REMOVED', id, ts: Date.now() }, null);
+    await removeImage(homeId, id);
+    broadcast({ type: 'IMAGE_REMOVED', id, ts: Date.now() }, homeId, null);
   }
   res.json({ ok: true });
 });

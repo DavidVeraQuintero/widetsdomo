@@ -17,7 +17,7 @@ test('broadcast sends to all open clients except sender', () => {
   addClient(ws3);
 
   const payload = { type: 'PATCH_DASHBOARD', ts: 1 };
-  broadcast(payload, ws1);
+  broadcast(payload, null, ws1);
 
   assert.equal(ws1._messages.length, 0); // sender excluded
   assert.equal(ws2._messages.length, 1);
@@ -33,6 +33,6 @@ test('removeClient stops receiving broadcasts', () => {
   const ws = makeFakeWs(1);
   addClient(ws);
   removeClient(ws);
-  broadcast({ type: 'TEST' }, null);
+  broadcast({ type: 'TEST' }, null, null);
   assert.equal(ws._messages.length, 0);
 });
