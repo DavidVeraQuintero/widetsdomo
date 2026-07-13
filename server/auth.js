@@ -13,8 +13,8 @@ export async function verifyCredentials(user, password) {
   return bcrypt.compare(password, ADMIN_HASH);
 }
 
-export function generateToken() {
-  return jwt.sign({ user: ADMIN_USER }, SECRET, { expiresIn: '30d' });
+export function generateToken({ isAdmin = false, email = null, homeId = null } = {}) {
+  return jwt.sign({ isAdmin, email, homeId }, SECRET, { expiresIn: '30d' });
 }
 
 export function verifyToken(token) {
@@ -40,9 +40,19 @@ export function clearSessionCookie(res) {
 
 export function authMiddleware(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
-  if (!token || !verifyToken(token)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const payload = token ? verifyToken(token) : null;
+  if (!payload) return res.status(401).json({ error: 'Unauthorized' });
+  req.session = {
+    isAdmin: payload.isAdmin ?? (payload.user === (process.env.ADMIN_USER || 'admin')), // backward compat with old tokens
+    email: payload.email ?? null,
+    homeId: payload.homeId ?? null,
+  };
+  next();
+}
+
+export function homeMiddleware(req, res, next) {
+  if (req.session?.isAdmin) return next(); // admin bypasses home requirement
+  if (!req.session?.homeId) return res.status(403).json({ error: 'No home selected' });
   next();
 }
 
