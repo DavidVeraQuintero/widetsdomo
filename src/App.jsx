@@ -204,6 +204,10 @@ export default function App() {
   };
 
   const handleEnterHome = (homeId, homeName) => {
+    // Clear stale localStorage before providers mount so they start with clean defaults
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('domotica'))
+      .forEach(k => localStorage.removeItem(k));
     setSessionInfo(prev => ({ ...prev, homeId, homeName }));
   };
 
