@@ -4,7 +4,6 @@ import styles from './Login.module.css';
 
 export default function Login({ onAuth }) {
   const [googleClientId, setGoogleClientId] = useState('');
-  const [houseName, setHouseName] = useState('');
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +15,6 @@ export default function Login({ onAuth }) {
       .then(r => r.json())
       .then(d => {
         setGoogleClientId(d.clientId ?? '');
-        setHouseName(d.houseName ?? '');
       })
       .catch(() => {});
   }, []);
@@ -70,7 +68,6 @@ export default function Login({ onAuth }) {
   const form = (
     <div className={styles.card}>
       <div className={styles.logo}>🏠</div>
-      <div className={styles.title}>{houseName || 'Mi Hogar'}</div>
 
       {googleClientId && (
         <>

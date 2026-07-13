@@ -21,7 +21,9 @@ import HubDeviceSync from './components/Hubs/HubDeviceSync.jsx';
 import { useConnectivity } from './hooks/useConnectivity.js';
 import OfflineModal from './components/Modal/OfflineModal.jsx';
 import StatusBar from './components/StatusBar/StatusBar.jsx';
-import AccessConfig from './components/Admin/AccessConfig.jsx';
+import AdminPanel from './components/Admin/AdminPanel.jsx';
+import HomePicker from './components/Auth/HomePicker.jsx';
+import HomeBar from './components/Admin/HomeBar.jsx';
 
 const TABS = [
   { id: 'widgets', icon: '📦', label: 'Widgets' },
@@ -31,7 +33,7 @@ const TABS = [
   { id: 'hubs',    icon: '🏠', label: 'Hubs' },
 ];
 
-function AppContent({ onLogout }) {
+function AppContent({ onLogout, onExitHome, homeName }) {
   const { dispatch } = useDashboard();
   const { hubs } = useHub();
   const mode = useConnectivity(hubs[0] ?? null);
@@ -49,7 +51,6 @@ function AppContent({ onLogout }) {
     }
   };
 
-  // Mobile touch drag
   useEffect(() => {
     const handleTouchMove = (e) => {
       const widgetId = window.widgetIdBeingDragged;
@@ -80,27 +81,13 @@ function AppContent({ onLogout }) {
       <HubDeviceSync />
 
       <div className={styles.shell}>
-        {/* ── Hamburger (visible solo cuando sidebar oculto) ─────── */}
         {!sidebarVisible && (
-          <button
-            className={styles.hamburger}
-            onClick={() => setSidebarVisible(true)}
-            title="Mostrar panel"
-          >
-            ☰
-          </button>
+          <button className={styles.hamburger} onClick={() => setSidebarVisible(true)} title="Mostrar panel">☰</button>
         )}
 
-        {/* ── Icon strip ─────────────────────────────────────────── */}
         <nav className={`${styles.iconStrip} ${!sidebarVisible ? styles.iconStripHidden : ''}`}>
           <div className={styles.stripTop}>
-            <button
-              className={styles.collapseBtn}
-              onClick={() => { setSidebarVisible(false); setPanelOpen(false); }}
-              title="Ocultar panel"
-            >
-              ☰
-            </button>
+            <button className={styles.collapseBtn} onClick={() => { setSidebarVisible(false); setPanelOpen(false); }} title="Ocultar panel">☰</button>
             {TABS.map(tab => (
               <button
                 key={tab.id}
@@ -115,13 +102,11 @@ function AppContent({ onLogout }) {
           </div>
 
           <div className={styles.stripBottom}>
-            {/* Connection chip */}
             {mode !== 'offline' && (
               <div className={styles.connChip} title={mode === 'local' ? 'Modo local (LAN directo)' : 'Conectado a la nube'}>
                 <span className={`${styles.connDot} ${mode === 'local' ? styles.connDotGreen : styles.connDotAmber}`} />
               </div>
             )}
-            {/* Account / logout */}
             <button
               className={`${styles.iconBtn} ${activeTab === 'cuenta' && panelOpen ? styles.iconBtnActive : ''}`}
               onClick={() => handleTabClick('cuenta')}
@@ -133,16 +118,13 @@ function AppContent({ onLogout }) {
           </div>
         </nav>
 
-        {/* ── Content panel ──────────────────────────────────────── */}
         <div className={`${styles.contentPanel} ${panelOpen && sidebarVisible ? styles.contentPanelOpen : ''}`}>
           {panelOpen && (
             <div className={styles.panelHeader}>
               <span className={styles.panelTitle}>
                 {TABS.find(t => t.id === activeTab)?.label ?? 'Cuenta'}
               </span>
-              <button className={styles.panelClose} onClick={() => setPanelOpen(false)} title="Ocultar panel">
-                ‹
-              </button>
+              <button className={styles.panelClose} onClick={() => setPanelOpen(false)} title="Ocultar panel">‹</button>
             </div>
           )}
           {activeTab === 'widgets' && <Sidebar onAddWidget={() => setPanelOpen(false)} />}
@@ -152,15 +134,12 @@ function AppContent({ onLogout }) {
           {activeTab === 'hubs'    && <HubsTab />}
           {activeTab === 'cuenta'  && (
             <div className={styles.cuentaPanel}>
-              <AccessConfig />
-              <button className={styles.logoutBtn} onClick={onLogout}>
-                ⏻ Cerrar sesión
-              </button>
+              <HomeBar homeName={homeName} onExit={onExitHome} />
+              <button className={styles.logoutBtn} onClick={onLogout}>⏻ Cerrar sesión</button>
             </div>
           )}
         </div>
 
-        {/* ── Canvas ─────────────────────────────────────────────── */}
         <div className={styles.canvasArea}>
           <Canvas />
           <StatusBar mode={mode} />
@@ -170,7 +149,7 @@ function AppContent({ onLogout }) {
   );
 }
 
-function AppInner({ onLogout }) {
+function AppInner({ onLogout, onExitHome, homeName }) {
   const { state: metaState } = useMeta();
   const { activeDashboardId } = metaState;
   const storageKey = `domotica-dashboard-${activeDashboardId}`;
@@ -178,7 +157,7 @@ function AppInner({ onLogout }) {
   return (
     <DashboardProvider key={activeDashboardId} storageKey={storageKey}>
       <SyncProvider>
-        <AppContent onLogout={onLogout} />
+        <AppContent onLogout={onLogout} onExitHome={onExitHome} homeName={homeName} />
       </SyncProvider>
     </DashboardProvider>
   );
@@ -187,40 +166,64 @@ function AppInner({ onLogout }) {
 const SESSION_KEY = 'domotica_session_expiry';
 
 export default function App() {
-  const [authChecked, setAuthChecked] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState(null); // { ok, isAdmin, email, homeId, homeName? } | null
 
-  useEffect(() => {
-    fetch('/api/me')
-      .then(r => {
-        if (r.ok) {
-          setAuthenticated(true);
+  const loadSession = () => {
+    setSessionChecked(false);
+    fetch('/api/session/info')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.ok) {
+          localStorage.setItem(SESSION_KEY, String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+          setSessionInfo(data);
         } else {
-          // 401 — real auth failure, clear cached session
           localStorage.removeItem(SESSION_KEY);
+          setSessionInfo(null);
         }
       })
       .catch(() => {
-        // Network error (Render unreachable) — trust local session if not expired
         const expiry = parseInt(localStorage.getItem(SESSION_KEY) || '0');
-        if (expiry > Date.now()) setAuthenticated(true);
+        if (expiry > Date.now()) {
+          setSessionInfo({ ok: true, isAdmin: false, email: null, homeId: null });
+        } else {
+          setSessionInfo(null);
+        }
       })
-      .finally(() => setAuthChecked(true));
-  }, []);
-
-  const handleAuth = () => {
-    localStorage.setItem(SESSION_KEY, String(Date.now() + 30 * 24 * 60 * 60 * 1000));
-    setAuthenticated(true);
+      .finally(() => setSessionChecked(true));
   };
+
+  useEffect(() => { loadSession(); }, []);
+
+  const handleAuth = () => { loadSession(); };
 
   const handleLogout = async () => {
     localStorage.removeItem(SESSION_KEY);
     await fetch('/api/logout', { method: 'POST' }).catch(() => {});
-    setAuthenticated(false);
+    setSessionInfo(null);
   };
 
-  if (!authChecked) return null;
-  if (!authenticated) return <Login onAuth={handleAuth} />;
+  const handleEnterHome = (homeId, homeName) => {
+    setSessionInfo(prev => ({ ...prev, homeId, homeName }));
+  };
+
+  const handleExitHome = async () => {
+    await fetch('/api/session/exit-home', { method: 'POST' }).catch(() => {});
+    setSessionInfo(prev => ({ ...prev, homeId: null, homeName: null }));
+  };
+
+  if (!sessionChecked) return null;
+  if (!sessionInfo) return <Login onAuth={handleAuth} />;
+
+  const { isAdmin, homeId, homeName } = sessionInfo;
+
+  if (isAdmin && !homeId) {
+    return <AdminPanel onEnterHome={handleEnterHome} onLogout={handleLogout} />;
+  }
+
+  if (!isAdmin && !homeId) {
+    return <HomePicker onEnterHome={handleEnterHome} onLogout={handleLogout} />;
+  }
 
   return (
     <MetaProvider>
@@ -228,7 +231,7 @@ export default function App() {
         <CalendarProvider>
           <DashboardTabs />
           <DndProvider backend={HTML5Backend}>
-            <AppInner onLogout={handleLogout} />
+            <AppInner onLogout={handleLogout} onExitHome={handleExitHome} homeName={homeName} />
           </DndProvider>
         </CalendarProvider>
       </HubProvider>
